@@ -1,0 +1,6 @@
+@Worklance.Api_HostAddress = http://localhost:5234
+
+GET {{Worklance.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
