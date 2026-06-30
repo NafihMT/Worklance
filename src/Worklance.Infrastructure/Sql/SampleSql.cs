@@ -4,11 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Worklance.Infrastructure.Data.Repositories
+namespace Worklance.Infrastructure.Sql
 {
-    internal class SampleRepository
+    internal class SampleSql
     {
         // Delete this
     }
-    
 }

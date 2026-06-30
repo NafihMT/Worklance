@@ -4,10 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Worklance.Application.DTOs.Sample
+namespace Worklance.Infrastructure.Queries
 {
-    internal class Sample
+    internal class DapperContext
     {
-        // Delete this
+        // Dapper Context
     }
 }
