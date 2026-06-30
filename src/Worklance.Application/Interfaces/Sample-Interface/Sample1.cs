@@ -4,11 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Worklance.Application
+namespace Worklance.Application.DTOs.Sample
 {
-    internal class DependencyInjection
+    internal class Sample
     {
-        // It is for register application services
-
+        // Delete this
     }
 }

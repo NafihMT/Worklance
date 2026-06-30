@@ -4,11 +4,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Worklance.Application
+namespace Worklance.Infrastructure.Data.Repositories
 {
-    internal class DependencyInjection
+    internal class SampleRepository
     {
-        // It is for register application services
-
+        // Delete this
     }
+    
 }

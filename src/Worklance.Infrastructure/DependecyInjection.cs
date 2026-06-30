@@ -4,11 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Worklance.Application
+namespace Worklance.Infrastructure
 {
-    internal class DependencyInjection
+    internal class DependecyInjection
     {
-        // It is for register application services
-
+        // It is for register infrastructure services
     }
 }

@@ -4,11 +4,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Worklance.Application
+namespace Worklance.Domain.Common
 {
-    internal class DependencyInjection
+    internal class BaseEntitySample
     {
-        // It is for register application services
+        // Create a  new BaseEntity.cs
 
     }
 }

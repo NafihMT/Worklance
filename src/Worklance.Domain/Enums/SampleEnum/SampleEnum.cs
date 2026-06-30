@@ -4,11 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Worklance.Application
+namespace Worklance.Domain.Entities
 {
-    internal class DependencyInjection
+    internal class SampleEnum
     {
-        // It is for register application services
-
+        //delete this
     }
 }
