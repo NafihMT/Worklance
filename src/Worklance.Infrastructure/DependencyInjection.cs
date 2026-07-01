@@ -18,6 +18,10 @@ public static class DependencyInjection
         services.AddScoped<DapperContext>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
+        
+        // Profile Module Repositories
+        services.AddScoped<IFreelancerProfileRepository, FreelancerProfileRepository>();
+        services.AddScoped<ISkillRepository, SkillRepository>();
 
         return services;
     }
