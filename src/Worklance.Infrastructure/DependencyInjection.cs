@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Worklance.Application.Interfaces.Queries;
 using Worklance.Application.Interfaces.Repositories;
 using Worklance.Infrastructure.Data;
 using Worklance.Infrastructure.Queries;
@@ -22,6 +23,9 @@ public static class DependencyInjection
         // Profile Module Repositories
         services.AddScoped<IFreelancerProfileRepository, FreelancerProfileRepository>();
         services.AddScoped<ISkillRepository, SkillRepository>();
+
+        // Profile Module Queries
+        services.AddScoped<IFreelancerProfileQueryService, FreelancerProfileQueryService>();
 
         return services;
     }
