@@ -32,6 +32,8 @@ public static class DependencyInjection
         // Profile Module Storage Services
         services.AddScoped<IFileStorageService, LocalFileStorageService>();
 
+        services.AddScoped<IAdminUserVerificationQuery, AdminUserVerificationQuery>();
+
         return services;
     }
 }
