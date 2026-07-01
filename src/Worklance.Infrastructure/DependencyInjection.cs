@@ -3,9 +3,11 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Worklance.Application.Interfaces.Queries;
 using Worklance.Application.Interfaces.Repositories;
+using Worklance.Application.Interfaces.Services;
 using Worklance.Infrastructure.Data;
 using Worklance.Infrastructure.Queries;
 using Worklance.Infrastructure.Repositories;
+using Worklance.Infrastructure.Services;
 
 namespace Worklance.Infrastructure;
 
@@ -26,6 +28,9 @@ public static class DependencyInjection
 
         // Profile Module Queries
         services.AddScoped<IFreelancerProfileQueryService, FreelancerProfileQueryService>();
+
+        // Profile Module Storage Services
+        services.AddScoped<IFileStorageService, LocalFileStorageService>();
 
         return services;
     }
