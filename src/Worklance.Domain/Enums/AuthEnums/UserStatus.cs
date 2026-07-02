@@ -4,11 +4,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Worklance.Infrastructure.Persistence.Migrations
+namespace Worklance.Domain.Enums.AuthEnums
 {
-    internal class SampleMigration
+    public enum UserStatus
     {
-       // Delete this
-
+        Pending = 1,
+        Approved = 2,
+        Rejected = 3,
     }
 }
