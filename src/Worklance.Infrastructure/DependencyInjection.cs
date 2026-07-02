@@ -26,6 +26,9 @@ public static class DependencyInjection
         services.AddScoped<IFreelancerProfileRepository, FreelancerProfileRepository>();
         services.AddScoped<ISkillRepository, SkillRepository>();
 
+        // Job Module Repositories
+        services.AddScoped<IJobRepository, JobRepository>();
+
         // Profile Module Queries
         services.AddScoped<IFreelancerProfileQueryService, FreelancerProfileQueryService>();
 
