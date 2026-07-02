@@ -6,7 +6,11 @@ using System.Threading.Tasks;
 
 namespace Worklance.Domain.Enums
 {
-    internal class VerificationStatus
+    public enum VerificationStatus
     {
+        Pending = 0,
+        Approved = 1,
+        Rejected = 2
     }
 }
+    

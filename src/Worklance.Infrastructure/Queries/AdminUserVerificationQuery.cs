@@ -1,4 +1,4 @@
-﻿using Dapper;
+using Dapper;
 using Worklance.Application.DTOs.AdminUserDTO;
 using Worklance.Application.Interfaces.Queries;
 using System.Collections.Generic;
@@ -19,35 +19,21 @@ namespace Worklance.Infrastructure.Queries
         {
             var sql = @"
                 SELECT 
-                    u.Id AS UserId,
-                    u.FullName,
-                    u.Email,
-                    u.AccountType,
-                    
-                    p.ProfilePhotoUrl,
-                    p.Profession,
-                    p.Headline,
-                    p.Bio,
-                    p.Location,
-                    
-                    p.GitHubUrl,
-                    p.BehanceUrl,
-                    p.PortfolioUrl,
-                    p.BusinessName,
-                    p.Services,
-                    p.LinkedInUrl,
-                    
-                    v.AadhaarNumber,
-                    v.AadhaarFrontImageUrl,
-                    v.AadhaarBackImageUrl,
-                    v.VerificationStatus
-                    
-                FROM Users u
-                LEFT JOIN Profiles p ON u.Id = p.UserId
-                INNER JOIN IdentityVerifications v ON u.Id = v.UserId
-                
-                WHERE v.VerificationStatus = 'Pending'
-                ORDER BY v.CreatedAt ASC";
+                    Id AS UserId,
+                    FullName,
+                    Email,
+                    PhoneNumber,
+                    CASE 
+                        WHEN AccountType = 1 THEN 'JobSeeker'
+                        WHEN AccountType = 2 THEN 'JobRecruiter'
+                        ELSE 'Unknown'
+                    END AS AccountType,
+                    AadhaarNumber,
+                    AadhaarProofPath,
+                    CreatedAt AS RegisteredAt
+                FROM Users
+                WHERE AdminVerificationStatus = 1
+                ORDER BY CreatedAt ASC";
 
             using var connection = _context.CreateConnection();
 

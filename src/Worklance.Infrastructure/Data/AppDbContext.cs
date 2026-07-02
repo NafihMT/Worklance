@@ -1,7 +1,7 @@
 using System.Reflection;
 using Microsoft.EntityFrameworkCore;
 using Worklance.Domain.Entities;
-
+using Worklance.Domain.Entities.AuthEntities;
 namespace Worklance.Infrastructure.Data;
 
 public class AppDbContext : DbContext
@@ -16,11 +16,14 @@ public class AppDbContext : DbContext
     public DbSet<FreelancerCertification> FreelancerCertifications => Set<FreelancerCertification>();
     public DbSet<FreelancerPortfolio> FreelancerPortfolios => Set<FreelancerPortfolio>();
     public DbSet<FreelancerLanguage> FreelancerLanguages => Set<FreelancerLanguage>();
+    public DbSet<User> Users { get; set; }
+    public DbSet<EmailOtp> EmailOtps { get; set; }
+    public DbSet<RefreshToken> RefreshTokens { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
-
         base.OnModelCreating(modelBuilder);
+
     }
 }

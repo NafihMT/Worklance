@@ -1,12 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
+using Worklance.Domain.Enums;
 
 namespace Worklance.Application.Interfaces.Repositories
 {
-    internal interface IUserVerificationRepository
+    public interface IUserVerificationRepository
     {
+        Task<bool> UpdateStatusAsync(string userId, VerificationStatus status, string? reason);
     }
 }
