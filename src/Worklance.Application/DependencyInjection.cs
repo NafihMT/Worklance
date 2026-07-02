@@ -16,6 +16,8 @@ public static class DependencyInjection
         });
 
         services.AddScoped<IFreelancerProfileService, FreelancerProfileService>();
+
+
         services.AddScoped<IJobService, JobService>();
 
         return services;

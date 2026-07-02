@@ -13,10 +13,6 @@ public class Program
     {
         var builder = WebApplication.CreateBuilder(args);
 
-        // Dependency Injection
-        builder.Services.AddScoped<IJobRepository, JobRepository>();
-        builder.Services.AddScoped<IJobService, JobService>();
-
         // Add services to the container.
         builder.Services.AddApplicationServices();
         builder.Services.AddInfrastructureServices(builder.Configuration);
