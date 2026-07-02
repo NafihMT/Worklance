@@ -4,11 +4,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Worklance.Application
+namespace Worklance.Domain.ValueObjects
 {
-    internal class DependencyInjection
+    internal class SampleValueObject
     {
-        // It is for register application services
+        // Delete this
 
     }
 }

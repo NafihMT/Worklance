@@ -4,11 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Worklance.Application
+namespace Worklance.Application.Common
 {
-    internal class DependencyInjection
+    internal class ResponseApi
     {
-        // It is for register application services
-
+        // replace the code
     }
 }

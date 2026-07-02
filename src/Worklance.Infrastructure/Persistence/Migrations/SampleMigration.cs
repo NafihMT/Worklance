@@ -4,11 +4,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Worklance.Application
+namespace Worklance.Infrastructure.Persistence.Migrations
 {
-    internal class DependencyInjection
+    internal class SampleMigration
     {
-        // It is for register application services
+       // Delete this
 
     }
 }

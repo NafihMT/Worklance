@@ -4,11 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Worklance.Application
+namespace Worklance.Application.Mapping.SampleMapping
 {
-    internal class DependencyInjection
+    internal class SampleMappingProfile
     {
-        // It is for register application services
-
+        // Delete This
     }
 }

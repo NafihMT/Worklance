@@ -4,11 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Worklance.Application
+namespace Worklance.Domain.Entities.Sample
 {
-    internal class DependencyInjection
+    internal class SampleEntity
     {
-        // It is for register application services
-
+        // Remove this file and folder
     }
 }

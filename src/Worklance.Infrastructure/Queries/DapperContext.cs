@@ -4,11 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Worklance.Application
+namespace Worklance.Infrastructure.Queries
 {
-    internal class DependencyInjection
+    internal class DapperContext
     {
-        // It is for register application services
-
+        // Dapper Context
     }
 }

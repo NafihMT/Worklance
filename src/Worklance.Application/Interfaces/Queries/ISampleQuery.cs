@@ -4,11 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Worklance.Application
+namespace Worklance.Application.Interfaces.Queries
 {
-    internal class DependencyInjection
+    internal interface ISampleQuery
     {
-        // It is for register application services
-
     }
 }
