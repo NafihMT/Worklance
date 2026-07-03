@@ -54,25 +54,17 @@ namespace Worklance.Infrastructure.Services.AuthServices
 
         public async Task<ApiResponse<string>> RegisterAsync(RegisterRequestDto request)
         {
-            var logPath = @"C:\Users\HP\source\repos\Worklance\crashlog.txt";
-            System.IO.File.AppendAllText(logPath, "5. RegisterAsync started. Validating request...\n");
             var validationResult = await _registerValidator.ValidateAsync(request);
             if (!validationResult.IsValid)
             {
                 throw new BadRequestException(validationResult.Errors.First().ErrorMessage);
             }
 
-            System.IO.File.AppendAllText(logPath, "6. Validation passed. Checking for duplicates...\n");
             await ValidateDuplicateAsync(request);
 
-            // TODO: Re-enable once Tesseract binaries and tessdata are installed on the local machine
-            // await VerifyAadhaarAsync(request.AadhaarProof, request.AadhaarNumber);
-
-            System.IO.File.AppendAllText(logPath, "7. Hashing password...\n");
             var passwordHash = HashPassword(request.Password);
             var otp = OtpGenerator.GenerateOtp();
 
-            System.IO.File.AppendAllText(logPath, "8. Creating temp user registration...\n");
             var tempUser = new TempUserRegistration
             {
                 Request = request,
@@ -81,13 +73,10 @@ namespace Worklance.Infrastructure.Services.AuthServices
                 ExpiresAt = DateTime.UtcNow.AddMinutes(5)
             };
 
-            System.IO.File.AppendAllText(logPath, "9. Storing in memory cache...\n");
             _memoryCache.Set(request.Email, tempUser, TimeSpan.FromMinutes(5));
 
-            System.IO.File.AppendAllText(logPath, "10. Sending OTP email...\n");
             await _emailService.SendOtpAsync(request.Email, otp);
 
-            System.IO.File.AppendAllText(logPath, "11. RegisterAsync completed successfully.\n");
             return ApiResponse<string>.SuccessResponse(
                 "Registration successful. OTP has been sent to your email.",
                 "Success",

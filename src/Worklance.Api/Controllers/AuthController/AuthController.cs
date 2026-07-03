@@ -36,27 +36,22 @@ namespace Worklance.Api.Controllers.AuthController
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromForm, Bind("FullName", "Email", "PhoneNumber", "Password", "ConfirmPassword", "AadhaarNumber", "AccountType")] RegisterRequestDto request)
         {
-            var logPath = @"C:\Users\HP\source\repos\Worklance\crashlog.txt";
-            System.IO.File.AppendAllText(logPath, "1. Register endpoint hit.\n");
+     
             
             var AadhaarProof = Request.Form.Files["AadhaarProof"];
             if (AadhaarProof == null || AadhaarProof.Length == 0)
             {
-                System.IO.File.AppendAllText(logPath, "Error: Aadhaar proof file is required.\n");
                 return BadRequest("Aadhaar proof file is required.");
             }
 
-            System.IO.File.AppendAllText(logPath, "2. Uploading image to Cloudinary...\n");
             using (var stream = AadhaarProof.OpenReadStream())
             {
                 var uploadedUrl = await _cloudinaryService.UploadImageAsync(stream, AadhaarProof.FileName);
                 request.AadhaarProof = uploadedUrl;
             }
 
-            System.IO.File.AppendAllText(logPath, "3. Calling AuthService.RegisterAsync...\n");
             var response = await _authService.RegisterAsync(request);
 
-            System.IO.File.AppendAllText(logPath, "4. Registration successful.\n");
             return StatusCode(response.StatusCode, response);
         }
 
