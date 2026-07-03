@@ -1,14 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
+using FluentValidation;
+using System.Reflection;
 
 namespace Worklance.Application
 {
-    internal class DependencyInjection
+    public static class DependencyInjection
     {
-        // It is for register application services
+        public static IServiceCollection AddApplicationServices(this IServiceCollection services)
+        {
+            // Register all validators in the assembly
+            services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
 
+            return services;
+        }
     }
 }
