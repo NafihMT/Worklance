@@ -26,6 +26,7 @@ public static class DependencyInjection
         services.AddScoped<IFreelancerProfileRepository, FreelancerProfileRepository>();
         services.AddScoped<ISkillRepository, SkillRepository>();
 
+
         // Profile Module Queries
         services.AddScoped<IFreelancerProfileQueryService, FreelancerProfileQueryService>();
 
@@ -46,6 +47,10 @@ public static class DependencyInjection
         services.AddScoped<Worklance.Application.Interfaces.AuthInterface.IJwtService, Worklance.Infrastructure.Services.JWT.JwtService>();
         services.AddScoped<Worklance.Application.Interfaces.AuthInterface.IOcrService, Worklance.Infrastructure.Services.OCR.OcrService>();
         services.AddScoped<Worklance.Application.Interfaces.Repositories.IUserVerificationRepository, Worklance.Infrastructure.Repositories.UserVerificationRepository>();
+
+
+        // Job Module Repositories
+        services.AddScoped<IJobRepository, JobRepository>();
 
         return services;
     }

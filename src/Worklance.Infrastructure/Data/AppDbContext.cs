@@ -12,6 +12,8 @@ public class AppDbContext : DbContext
 
     public DbSet<FreelancerProfile> FreelancerProfiles => Set<FreelancerProfile>();
     public DbSet<Skill> Skills => Set<Skill>();
+    public DbSet<Job> Jobs => Set<Job>();
+    public DbSet<Category> Categories => Set<Category>();
     public DbSet<FreelancerEducation> FreelancerEducations => Set<FreelancerEducation>();
     public DbSet<FreelancerCertification> FreelancerCertifications => Set<FreelancerCertification>();
     public DbSet<FreelancerPortfolio> FreelancerPortfolios => Set<FreelancerPortfolio>();
