@@ -29,7 +29,60 @@ public class FreelancerProfileQueryService : IFreelancerProfileQueryService
 
         if (profileId == null) return null;
 
-        return await GetProfileByIdAsync(profileId.Value);
+        const string query = @"
+            SELECT 
+                p.Id,
+                p.UserId,
+                p.FirstName,
+                p.LastName,
+                p.Username,
+                COALESCE(NULLIF(p.Email, ''), u.Email) AS Email,
+                COALESCE(NULLIF(p.PhoneNumber, ''), u.PhoneNumber) AS PhoneNumber,
+                p.DateOfBirth,
+                p.Gender,
+                p.ProfilePhotoUrl,
+                p.Country,
+                p.State,
+                p.City,
+                p.Address,
+                p.ProfessionalTitle,
+                p.AboutMe,
+                p.PrimaryTechnologyStack,
+                p.Specialization,
+                p.IsExperienced,
+                p.ExperienceYears,
+                p.ExperienceMonths,
+                p.Availability,
+                p.WorkPreference,
+                p.HourlyRate,
+                p.ResumeUrl,
+                p.GitHubUrl,
+                p.LinkedInUrl,
+                p.PortfolioWebsiteUrl,
+                p.TwitterUrl
+            FROM FreelancerProfiles p
+            LEFT JOIN Users u ON p.UserId = CAST(u.Id AS NVARCHAR(450))
+            WHERE p.Id = @Id;
+
+            SELECT s.* FROM Skills s INNER JOIN FreelancerSkills fs ON s.Id = fs.SkillId WHERE fs.FreelancerProfileId = @Id;
+            SELECT * FROM FreelancerEducations WHERE FreelancerProfileId = @Id;
+            SELECT * FROM FreelancerCertifications WHERE FreelancerProfileId = @Id;
+            SELECT * FROM FreelancerPortfolios WHERE FreelancerProfileId = @Id;
+            SELECT * FROM FreelancerLanguages WHERE FreelancerProfileId = @Id;
+        ";
+
+        using var multi = await connection.QueryMultipleAsync(query, new { Id = profileId.Value });
+
+        var profile = await multi.ReadFirstOrDefaultAsync<FreelancerProfileDto>();
+        if (profile == null) return null;
+
+        profile.Skills = (await multi.ReadAsync<SkillDto>()).ToList();
+        profile.Educations = (await multi.ReadAsync<FreelancerEducationDto>()).ToList();
+        profile.Certifications = (await multi.ReadAsync<FreelancerCertificationDto>()).ToList();
+        profile.Portfolios = (await multi.ReadAsync<FreelancerPortfolioDto>()).ToList();
+        profile.Languages = (await multi.ReadAsync<FreelancerLanguageDto>()).ToList();
+
+        return profile;
     }
 
     public async Task<FreelancerProfileDto?> GetProfileByIdAsync(int id)

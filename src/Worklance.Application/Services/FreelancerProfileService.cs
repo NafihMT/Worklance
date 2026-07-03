@@ -393,7 +393,7 @@ public class FreelancerProfileService : IFreelancerProfileService
 
     private void ValidateUrl(string? url, string fieldName)
     {
-        if (string.IsNullOrEmpty(url)) return;
+        if (string.IsNullOrWhiteSpace(url)) return;
 
         if (!Uri.TryCreate(url, UriKind.Absolute, out var uriResult) || 
             (uriResult.Scheme != Uri.UriSchemeHttp && uriResult.Scheme != Uri.UriSchemeHttps))
