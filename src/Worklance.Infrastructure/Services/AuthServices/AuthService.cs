@@ -54,19 +54,25 @@ namespace Worklance.Infrastructure.Services.AuthServices
 
         public async Task<ApiResponse<string>> RegisterAsync(RegisterRequestDto request)
         {
+            var logPath = @"C:\Users\HP\source\repos\Worklance\crashlog.txt";
+            System.IO.File.AppendAllText(logPath, "5. RegisterAsync started. Validating request...\n");
             var validationResult = await _registerValidator.ValidateAsync(request);
             if (!validationResult.IsValid)
             {
                 throw new BadRequestException(validationResult.Errors.First().ErrorMessage);
             }
 
+            System.IO.File.AppendAllText(logPath, "6. Validation passed. Checking for duplicates...\n");
             await ValidateDuplicateAsync(request);
 
-            await VerifyAadhaarAsync(request.AadhaarProof, request.AadhaarNumber);
+            // TODO: Re-enable once Tesseract binaries and tessdata are installed on the local machine
+            // await VerifyAadhaarAsync(request.AadhaarProof, request.AadhaarNumber);
 
+            System.IO.File.AppendAllText(logPath, "7. Hashing password...\n");
             var passwordHash = HashPassword(request.Password);
             var otp = OtpGenerator.GenerateOtp();
 
+            System.IO.File.AppendAllText(logPath, "8. Creating temp user registration...\n");
             var tempUser = new TempUserRegistration
             {
                 Request = request,
@@ -75,10 +81,13 @@ namespace Worklance.Infrastructure.Services.AuthServices
                 ExpiresAt = DateTime.UtcNow.AddMinutes(5)
             };
 
+            System.IO.File.AppendAllText(logPath, "9. Storing in memory cache...\n");
             _memoryCache.Set(request.Email, tempUser, TimeSpan.FromMinutes(5));
 
+            System.IO.File.AppendAllText(logPath, "10. Sending OTP email...\n");
             await _emailService.SendOtpAsync(request.Email, otp);
 
+            System.IO.File.AppendAllText(logPath, "11. RegisterAsync completed successfully.\n");
             return ApiResponse<string>.SuccessResponse(
                 "Registration successful. OTP has been sent to your email.",
                 "Success",
@@ -164,7 +173,7 @@ namespace Worklance.Infrastructure.Services.AuthServices
 
             await _authRepository.SaveChangesAsync();
         }
-        public async Task<ApiResponse<string>> VerifyOtpAsync(VerifyOtpRequestDto request)
+        public async Task<ApiResponse<LoginResponseDto>> VerifyOtpAsync(VerifyOtpRequestDto request)
         {
             if (!_memoryCache.TryGetValue(request.Email, out TempUserRegistration? tempUser) || tempUser == null)
             {
@@ -184,14 +193,31 @@ namespace Worklance.Infrastructure.Services.AuthServices
 
             var user = CreateUser(tempUser.Request, tempUser.PasswordHash, tempUser.Request.AadhaarProof);
             user.EmailVerified = true;
-            user.Status = UserStatus.Approved;
+            // Admin verification remains Pending until Admin approves
+            user.Status = UserStatus.Pending;
 
             await _authRepository.AddUserAsync(user);
             await _authRepository.SaveChangesAsync();
 
             _memoryCache.Remove(request.Email);
 
-            return ApiResponse<string>.SuccessResponse("Email verified successfully.", "Success", 200);
+            var accessToken = _jwtService.GenerateAccessToken(user);
+            var refreshTokenEntity = _jwtService.GenerateRefreshToken();
+            refreshTokenEntity.UserId = user.Id;
+
+            await _authRepository.AddRefreshTokenAsync(refreshTokenEntity);
+            await _authRepository.SaveChangesAsync();
+
+            var response = new LoginResponseDto
+            {
+                UserId = user.Id,
+                FullName = user.FullName,
+                Email = user.Email,
+                AccessToken = accessToken,
+                RefreshToken = refreshTokenEntity.Token
+            };
+
+            return ApiResponse<LoginResponseDto>.SuccessResponse(response, "Email verified successfully.", 200);
         }
         private EmailOtp CreateEmailOtp(User user,string otp)
         {

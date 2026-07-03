@@ -24,10 +24,4 @@
     <ProjectReference Include="..\Worklance.Infrastructure\Worklance.Infrastructure.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <None Update="tessdata\**\*">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
-
 </Project>

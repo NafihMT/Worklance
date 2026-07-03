@@ -22,4 +22,8 @@
     <ProjectReference Include="..\Worklance.Domain\Worklance.Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Worklance.Domain\Worklance.Domain.csproj" />
+  </ItemGroup>
+
 </Project>

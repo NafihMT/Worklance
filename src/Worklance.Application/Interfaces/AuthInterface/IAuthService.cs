@@ -11,7 +11,7 @@ namespace Worklance.Application.Interfaces.AuthInterface
     public interface IAuthService
     {
         Task<ApiResponse<string>> RegisterAsync(RegisterRequestDto request);
-        Task<ApiResponse<string>>VerifyOtpAsync(VerifyOtpRequestDto request);
+        Task<ApiResponse<LoginResponseDto>> VerifyOtpAsync(VerifyOtpRequestDto request);
         Task<ApiResponse<LoginResponseDto>> LoginAsync(LoginRequestDto request);
         Task<ApiResponse<RefreshTokenResponseDto>> RefreshTokenAsync(RefreshTokenRequestDto request);
         Task<ApiResponse<string>> ForgotPasswordAsync(ForgotPasswordRequestDto request);

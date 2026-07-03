@@ -8,7 +8,7 @@ namespace Worklance.Domain.Enums.AuthEnums
 {
     public enum AccountType
     {
-        JobSeeker=1,
-        JobRecruiter=2
+        JobSeeker = 1,
+        JobRecruiter = 2
     }
 }

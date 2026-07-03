@@ -31,7 +31,8 @@ namespace Worklance.Infrastructure.Services.JWT
                 new Claim(JwtRegisteredClaimNames.Email, user.Email),
                 new Claim("FullName", user.FullName),
                 new Claim("AccountType", user.AccountType.ToString()),
-                new Claim("Status", user.Status.ToString())
+                new Claim("Status", user.Status.ToString()),
+                new Claim("role", ((int)user.Role).ToString())
             };
 
             var key = new SymmetricSecurityKey(

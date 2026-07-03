@@ -1,13 +1,24 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System;
+using System.Data;
+using Microsoft.Data.SqlClient;
+using Microsoft.Extensions.Configuration;
 
-namespace Worklance.Infrastructure.Queries
+namespace Worklance.Infrastructure.Queries;
+
+public class DapperContext
 {
-    internal class DapperContext
+    private readonly IConfiguration _configuration;
+    private readonly string _connectionString;
+
+    public DapperContext(IConfiguration configuration)
     {
-        // Dapper Context
+        _configuration = configuration;
+        _connectionString = _configuration.GetConnectionString("DefaultConnection") 
+            ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+    }
+
+    public IDbConnection CreateConnection()
+    {
+        return new SqlConnection(_connectionString);
     }
 }

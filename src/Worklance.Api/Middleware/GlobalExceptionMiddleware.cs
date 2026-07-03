@@ -14,10 +14,12 @@ namespace Worklance.Api.Middleware
     public class GlobalExceptionMiddleware
     {
         private readonly RequestDelegate _next;
+        private readonly Microsoft.Extensions.Logging.ILogger<GlobalExceptionMiddleware> _logger;
 
-        public GlobalExceptionMiddleware(RequestDelegate next)
+        public GlobalExceptionMiddleware(RequestDelegate next, Microsoft.Extensions.Logging.ILogger<GlobalExceptionMiddleware> logger)
         {
             _next = next;
+            _logger = logger;
         }
 
         public async Task InvokeAsync(HttpContext context)
@@ -28,6 +30,7 @@ namespace Worklance.Api.Middleware
             }
             catch (Exception exception)
             {
+                _logger.LogError(exception, "A fatal unhandled exception occurred during the request.");
                 await HandleExceptionAsync(context, exception);
             }
         }

@@ -21,7 +21,7 @@ namespace Worklance.Application.DTOs.AuthDTOs
         public string ConfirmPassword { get; set; } = string.Empty;
         public string AadhaarNumber { get; set; } = string.Empty;
         
-        internal string AadhaarProof { get; set; } = null!;
+        public string AadhaarProof { get; set; } = string.Empty;
         
         public AccountType AccountType { get; set; }
     }

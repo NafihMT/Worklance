@@ -1,4 +1,4 @@
-
+using System.Security.Claims;
 using Worklance.Application;
 using Worklance.Infrastructure;
 using Worklance.Api.Middleware;
@@ -8,94 +8,112 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Worklance.Infrastructure.Settings;
 
-namespace Worklance.API
+namespace Worklance.API;
+
+public class Program
 {
-    public class Program
+    public static void Main(string[] args)
     {
-        public static void Main(string[] args)
+        var builder = WebApplication.CreateBuilder(args);
+
+        // Add services to the container.
+        builder.Services.AddApplicationServices();
+        builder.Services.AddInfrastructureServices(builder.Configuration);
+        builder.Services.AddMemoryCache();
+
+        // Configure JWT Authentication
+        var jwtSettings = builder.Configuration.GetSection("JwtSettings").Get<JwtSettings>() ?? new JwtSettings();
+
+        builder.Services.AddAuthentication(options =>
         {
-            var builder = WebApplication.CreateBuilder(args);
-
-            // Add services to the container.
-            builder.Services.AddApplicationServices();
-            builder.Services.AddInfrastructureServices(builder.Configuration);
-            builder.Services.AddMemoryCache();
-
-            // Configure JWT Authentication
-            var jwtSettings = builder.Configuration.GetSection("JwtSettings").Get<JwtSettings>() 
-                ?? new JwtSettings();
-
-            builder.Services.AddAuthentication(options =>
+            options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+            options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+        })
+        .AddJwtBearer(options =>
+        {
+            options.TokenValidationParameters = new TokenValidationParameters
             {
-                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-            })
-            .AddJwtBearer(options =>
-            {
-                options.TokenValidationParameters = new TokenValidationParameters
-                {
-                    ValidateIssuer = true,
-                    ValidateAudience = true,
-                    ValidateLifetime = true,
-                    ValidateIssuerSigningKey = true,
-                    ValidIssuer = jwtSettings.Issuer,
-                    ValidAudience = jwtSettings.Audience,
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.SecretKey))
-                };
-            });
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true,
+                ValidIssuer = jwtSettings.Issuer,
+                ValidAudience = jwtSettings.Audience,
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.SecretKey)),
+                RoleClaimType = ClaimTypes.Role
+            };
 
-            builder.Services.AddControllers();
-            // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-            builder.Services.AddEndpointsApiExplorer();
-            
-            builder.Services.AddSwaggerGen(options =>
+            options.Events = new JwtBearerEvents
             {
-                options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+                OnMessageReceived = context =>
                 {
-                    Name = "Authorization",
-                    Type = SecuritySchemeType.ApiKey,
-                    Scheme = "Bearer",
-                    BearerFormat = "JWT",
-                    In = ParameterLocation.Header,
-                    Description = "JWT Authorization header using the Bearer scheme. \r\n\r\n Enter 'Bearer' [space] and then your token in the text input below.\r\n\r\nExample: \"Bearer 12345abcdef\""
-                });
-
-                options.AddSecurityRequirement(new OpenApiSecurityRequirement
-                {
+                    if (context.Request.Cookies.ContainsKey("accessToken"))
                     {
-                        new OpenApiSecurityScheme
-                        {
-                            Reference = new OpenApiReference
-                            {
-                                Type = ReferenceType.SecurityScheme,
-                                Id = "Bearer"
-                            }
-                        },
-                        new string[] {}
+                        context.Token = context.Request.Cookies["accessToken"];
                     }
-                });
+                    return Task.CompletedTask;
+                },
+                OnAuthenticationFailed = context =>
+                {
+                    Console.WriteLine("OnAuthenticationFailed: " + context.Exception.Message);
+                    return Task.CompletedTask;
+                },
+                OnTokenValidated = context =>
+                {
+                    Console.WriteLine("OnTokenValidated: " + context.SecurityToken);
+                    return Task.CompletedTask;
+                }
+            };
+        });
+
+        builder.Services.AddControllers()
+            .AddJsonOptions(options =>
+            {
+                options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
+            });
+        builder.Services.AddAuthorization();
+        builder.Services.AddEndpointsApiExplorer();
+        builder.Services.AddCors();
+
+        builder.Services.AddSwaggerGen(options =>
+        {
+            options.OperationFilter<Worklance.Api.Infrastructure.Swagger.FileUploadOperationFilter>();
+            
+            options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+            {
+                Type = SecuritySchemeType.Http,
+                Scheme = "bearer",
+                BearerFormat = "JWT",
+                In = ParameterLocation.Header,
+                Description = "JWT Authorization header using the Bearer scheme."
             });
 
-            var app = builder.Build();
+            options.AddSecurityRequirement(new OpenApiSecurityRequirement {
+                { new OpenApiSecurityScheme { Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" } }, new string[] {} }
+            });
+        });
 
-            app.UseMiddleware<GlobalExceptionMiddleware>();
+        var app = builder.Build();
+        app.UseMiddleware<GlobalExceptionMiddleware>();
 
-            // Configure the HTTP request pipeline.
-            if (app.Environment.IsDevelopment())
-            {
-                app.UseSwagger();
-                app.UseSwaggerUI();
-            }
-
-            app.UseHttpsRedirection();
-
-            app.UseAuthentication();
-            app.UseAuthorization();
-
-
-            app.MapControllers();
-
-            app.Run();
+        if (app.Environment.IsDevelopment())
+        {
+            app.UseSwagger();
+            app.UseSwaggerUI();
         }
+
+        app.UseHttpsRedirection();
+
+        // Enable CORS
+        app.UseCors(policy => policy
+            .AllowAnyOrigin()
+            .AllowAnyMethod()
+            .AllowAnyHeader());
+
+        app.UseAuthentication();
+        app.UseAuthorization();
+        app.MapControllers();
+        app.Run();
     }
 }
