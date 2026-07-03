@@ -22,6 +22,8 @@ public static class DependencyInjection
         services.AddScoped<IFreelancerProfileService, FreelancerProfileService>();
 
         services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
+
+
         services.AddScoped<IJobService, JobService>();
 
         return services;

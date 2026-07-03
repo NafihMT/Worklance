@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using System.Text.Json;
 using Worklance.Application.DTOs.Jobs;
 using Worklance.Application.Exceptions;
