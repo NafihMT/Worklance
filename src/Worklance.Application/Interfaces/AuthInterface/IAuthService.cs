@@ -16,5 +16,6 @@ namespace Worklance.Application.Interfaces.AuthInterface
         Task<ApiResponse<RefreshTokenResponseDto>> RefreshTokenAsync(RefreshTokenRequestDto request);
         Task<ApiResponse<string>> ForgotPasswordAsync(ForgotPasswordRequestDto request);
         Task<ApiResponse<string>> ResetPasswordAsync(ResetPasswordRequestDto request);
+        Task<ApiResponse<string>> LogoutAsync(string refreshToken);
     }
 }

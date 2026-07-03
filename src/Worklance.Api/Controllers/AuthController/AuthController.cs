@@ -121,6 +121,35 @@ namespace Worklance.Api.Controllers.AuthController
             return StatusCode(response.StatusCode, response);
         }
 
+        private void ClearCookies()
+        {
+            var cookieOptions = new CookieOptions
+            {
+                HttpOnly = true,
+                Expires = System.DateTime.UtcNow.AddDays(-1), // Set expiration to the past to delete it
+                Secure = true,
+                SameSite = SameSiteMode.None
+            };
+
+            Response.Cookies.Append("accessToken", "", cookieOptions);
+            Response.Cookies.Append("refreshToken", "", cookieOptions);
+        }
+
+        [Authorize]
+        [HttpPost("logout")]
+        public async Task<IActionResult> Logout()
+        {
+            var refreshToken = Request.Cookies["refreshToken"];
+
+            if (!string.IsNullOrWhiteSpace(refreshToken))
+            {
+                await _authService.LogoutAsync(refreshToken);
+            }
+
+            ClearCookies();
+            return Ok(Worklance.Application.Common.ApiResponse.ApiResponse<string>.SuccessResponse("Logged out successfully.", "Success", 200));
+        }
+
         [HttpPost("forgot-password")]
         public async Task<IActionResult> ForgotPassword(ForgotPasswordRequestDto request)
         {

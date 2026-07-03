@@ -348,7 +348,23 @@ namespace Worklance.Infrastructure.Services.AuthServices
 
             return ApiResponse<string>.SuccessResponse("Password has been reset successfully.", "Success", 200);
         }
+
+        public async Task<ApiResponse<string>> LogoutAsync(string refreshToken)
+        {
+            var storedToken = await _authRepository.GetRefreshTokenAsync(refreshToken);
+
+            if (storedToken != null && !storedToken.IsRevoked)
+            {
+                storedToken.IsRevoked = true;
+                await _authRepository.UpdateRefreshTokenAsync(storedToken);
+                await _authRepository.SaveChangesAsync();
+            }
+
+            return ApiResponse<string>.SuccessResponse("Logged out successfully.", "Success", 200);
+        }
     }
+
+
 
     public class TempUserRegistration
     {
