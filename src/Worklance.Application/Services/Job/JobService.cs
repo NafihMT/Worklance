@@ -62,7 +62,6 @@ public class JobService : IJobService
         if (clientProfileId == 0)
             throw new NotFoundException("Client profile not found for the current user.");
 
-        // 6. Map to entity
         var job = new Job
         {
             Title = request.Title.Trim(),
@@ -85,7 +84,6 @@ public class JobService : IJobService
         await _jobRepository.AddAsync(job);
         await _unitOfWork.SaveChangesAsync();
 
-        // 7. Re-fetch with includes for a complete response
         var fullJob = await _jobRepository.GetJobWithDetailsAsync(job.JobId)
             ?? throw new NotFoundException("Job creation failed unexpectedly.");
 

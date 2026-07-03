@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using Worklance.Application.DTOs.Jobs;
 using Worklance.Application.Exceptions;
-using Worklance.Application.Interfaces;
 using Worklance.Application.Interfaces.Services;
 
 namespace Worklance.API.Controllers;
@@ -20,12 +19,12 @@ public class JobsController : ControllerBase
     }
 
     [HttpPost]
-    //[Authorize(Roles = "Client,Worker")]
+    [Authorize(Roles = "Client,Worker")]
     public async Task<IActionResult> CreateJob([FromBody] CreateJobRequest request)
     {
 
-        //var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        var userId = "test-user-id";
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        
         if (string.IsNullOrEmpty(userId))
             return Unauthorized();
 
@@ -45,7 +44,7 @@ public class JobsController : ControllerBase
     }
 
     [HttpGet]
-    //[Authorize] 
+    [Authorize] 
     public async Task<IActionResult> GetJobs()
     {
         var jobs = await _jobService.GetAllJobsAsync();
@@ -53,7 +52,7 @@ public class JobsController : ControllerBase
     }
 
     [HttpGet("{id}")]
-    //[Authorize]
+    [Authorize]
     public async Task<IActionResult> GetJobById(int id)
     {
         try

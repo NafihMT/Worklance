@@ -23,14 +23,12 @@ namespace Worklance.Domain.Entities.Job
         public JobType JobType { get; set; }
         public JobStatus Status { get; set; } = JobStatus.Open;
 
-        // Budget fields — usage depends on JobType
         public decimal? FixedBudget { get; set; }
         public decimal? MinHourlyRate { get; set; }
         public decimal? MaxHourlyRate { get; set; }
 
         public DateTime Deadline { get; set; }
 
-        // Stored as JSON string in DB, exposed as List<string> in Application layer
         public string TagsJson { get; set; } = "[]";
 
         public string? AttachmentUrl { get; set; }
@@ -38,11 +36,10 @@ namespace Worklance.Domain.Entities.Job
         public ICollection<JobSkill> JobSkills { get; set; } = new List<JobSkill>();
         public ICollection<Bid> Bids { get; set; } = new List<Bid>();
 
-        // Soft delete
         public bool IsDeleted { get; set; } = false;
         public DateTime? DeletedAt { get; set; }
 
-        // Audit
+
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
     }
