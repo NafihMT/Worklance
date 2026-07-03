@@ -49,6 +49,7 @@ public class FreelancerProfileService : IFreelancerProfileService
 
         // Validate: Experience
         ValidateExperience(dto.IsExperienced, dto.ExperienceYears, dto.ExperienceMonths);
+        ValidateSocialLinks(dto.GitHubUrl, dto.LinkedInUrl, dto.PortfolioWebsiteUrl, dto.TwitterUrl);
 
         var profile = new FreelancerProfile
         {
@@ -139,6 +140,7 @@ public class FreelancerProfileService : IFreelancerProfileService
 
         // Validate: Experience
         ValidateExperience(dto.IsExperienced, dto.ExperienceYears, dto.ExperienceMonths);
+        ValidateSocialLinks(dto.GitHubUrl, dto.LinkedInUrl, dto.PortfolioWebsiteUrl, dto.TwitterUrl);
 
         profile.FirstName = dto.FirstName;
         profile.LastName = dto.LastName;
@@ -270,13 +272,9 @@ public class FreelancerProfileService : IFreelancerProfileService
             throw new ArgumentException("Invalid file type. Only PDF, DOC, and DOCX are allowed.");
         }
 
-        // Delete old resume file if exists
-        if (!string.IsNullOrEmpty(profile.ResumeUrl))
-        {
-            _fileStorageService.DeleteFile(profile.ResumeUrl);
-        }
+        var oldResumeUrl = profile.ResumeUrl;
 
-        // Save new resume
+        // Save new resume first
         var relativePath = await _fileStorageService.SaveFileAsync(fileStream, fileName, "resumes");
         profile.ResumeUrl = relativePath;
         profile.LastModifiedAt = DateTime.UtcNow;
@@ -284,6 +282,12 @@ public class FreelancerProfileService : IFreelancerProfileService
 
         _profileRepository.Update(profile);
         await _unitOfWork.SaveChangesAsync();
+
+        // Delete old resume file only after database updates successfully
+        if (!string.IsNullOrEmpty(oldResumeUrl))
+        {
+            _fileStorageService.DeleteFile(oldResumeUrl);
+        }
 
         return relativePath;
     }
@@ -301,13 +305,15 @@ public class FreelancerProfileService : IFreelancerProfileService
             throw new InvalidOperationException("No resume associated with this profile.");
         }
 
-        _fileStorageService.DeleteFile(profile.ResumeUrl);
+        var oldResumeUrl = profile.ResumeUrl;
         profile.ResumeUrl = null;
         profile.LastModifiedAt = DateTime.UtcNow;
         profile.LastModifiedBy = userId;
 
         _profileRepository.Update(profile);
         await _unitOfWork.SaveChangesAsync();
+
+        _fileStorageService.DeleteFile(oldResumeUrl);
     }
 
     public async Task<(Stream FileStream, string ContentType, string FileName)> DownloadResumeAsync(string userId)
@@ -341,6 +347,8 @@ public class FreelancerProfileService : IFreelancerProfileService
             throw new KeyNotFoundException("Profile not found.");
         }
 
+        ValidateSocialLinks(dto.GitHubUrl, dto.LinkedInUrl, dto.PortfolioWebsiteUrl, dto.TwitterUrl);
+
         profile.GitHubUrl = dto.GitHubUrl;
         profile.LinkedInUrl = dto.LinkedInUrl;
         profile.PortfolioWebsiteUrl = dto.PortfolioWebsiteUrl;
@@ -360,10 +368,37 @@ public class FreelancerProfileService : IFreelancerProfileService
         {
             var y = years ?? 0;
             var m = months ?? 0;
-            if (y <= 0 && m <= 0)
+            if (y < 0 || m < 0)
+            {
+                throw new ArgumentException("Experience years and months cannot be negative.");
+            }
+            if (y == 0 && m == 0)
             {
                 throw new ArgumentException("Years or months of experience is required for experienced freelancers.");
             }
+            if (m > 11)
+            {
+                throw new ArgumentException("Experience months cannot exceed 11.");
+            }
+        }
+    }
+
+    private void ValidateSocialLinks(string? gitHubUrl, string? linkedInUrl, string? portfolioWebsiteUrl, string? twitterUrl)
+    {
+        ValidateUrl(gitHubUrl, "GitHub");
+        ValidateUrl(linkedInUrl, "LinkedIn");
+        ValidateUrl(portfolioWebsiteUrl, "Portfolio Website");
+        ValidateUrl(twitterUrl, "Twitter");
+    }
+
+    private void ValidateUrl(string? url, string fieldName)
+    {
+        if (string.IsNullOrEmpty(url)) return;
+
+        if (!Uri.TryCreate(url, UriKind.Absolute, out var uriResult) || 
+            (uriResult.Scheme != Uri.UriSchemeHttp && uriResult.Scheme != Uri.UriSchemeHttps))
+        {
+            throw new ArgumentException($"Invalid URL format for {fieldName}. Must start with http:// or https://");
         }
     }
 
