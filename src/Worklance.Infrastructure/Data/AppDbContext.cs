@@ -2,6 +2,7 @@ using System.Reflection;
 using Microsoft.EntityFrameworkCore;
 using Worklance.Domain.Entities;
 using Worklance.Domain.Entities.AuthEntities;
+using Worklance.Domain.Entities.Job;
 namespace Worklance.Infrastructure.Data;
 
 public class AppDbContext : DbContext

@@ -1,16 +1,10 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Security.Cryptography;
-using System.Text;
-using System.Threading.Tasks;
+using Worklance.Domain.Common;
 using Worklance.Domain.Enums.Job;
 
 namespace Worklance.Domain.Entities.Job
 {
-    public class Job
+    public class Job : BaseAuditableEntity
     {
-        public int JobId { get; set; }
         public string Title { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
         public int ClientProfileId { get; set; }
@@ -39,8 +33,6 @@ namespace Worklance.Domain.Entities.Job
         public bool IsDeleted { get; set; } = false;
         public DateTime? DeletedAt { get; set; }
 
-
-        public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
     }
 }

@@ -12,7 +12,7 @@ namespace Worklance.Application.Common.ApiResponse
         public int StatusCode { get; set; }
         public string Message { get; set; } = string.Empty;
         public T? Data { get; set; }
-        public IEnumerable<string>? Errorrs { get; set; }
+        public IEnumerable<string>? Errors { get; set; }
         
         public static ApiResponse<T>SuccessResponse(
             T data,
@@ -37,7 +37,7 @@ namespace Worklance.Application.Common.ApiResponse
                 Success = false,
                 StatusCode = statusCode,
                 Message = message,
-                Errorrs = errors
+                Errors = errors
             };
         }
     }

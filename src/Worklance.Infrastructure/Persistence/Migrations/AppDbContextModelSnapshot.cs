@@ -37,6 +37,134 @@ namespace Worklance.Infrastructure.Persistence.Migrations
                     b.ToTable("FreelancerSkills", (string)null);
                 });
 
+            modelBuilder.Entity("Worklance.Domain.Entities.AuthEntities.EmailOtp", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsUsed")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("OtpCode")
+                        .IsRequired()
+                        .HasMaxLength(6)
+                        .HasColumnType("nvarchar(6)");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("EmailOtps");
+                });
+
+            modelBuilder.Entity("Worklance.Domain.Entities.AuthEntities.RefreshToken", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsRevoked")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Token")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("RefreshTokens");
+                });
+
+            modelBuilder.Entity("Worklance.Domain.Entities.AuthEntities.User", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AadhaarNumber")
+                        .IsRequired()
+                        .HasMaxLength(12)
+                        .HasColumnType("nvarchar(12)");
+
+                    b.Property<string>("AadhaarProofPath")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("AccountType")
+                        .HasColumnType("int");
+
+                    b.Property<int>("AdminVerificationStatus")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<bool>("EmailVerified")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("FullName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PhoneNumber")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
+                    b.Property<string>("RejectionReason")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Role")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AadhaarNumber")
+                        .IsUnique();
+
+                    b.HasIndex("Email")
+                        .IsUnique();
+
+                    b.HasIndex("PhoneNumber")
+                        .IsUnique();
+
+                    b.ToTable("Users");
+                });
+
             modelBuilder.Entity("Worklance.Domain.Entities.FreelancerCertification", b =>
                 {
                     b.Property<int>("Id")
@@ -489,12 +617,17 @@ namespace Worklance.Infrastructure.Persistence.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<int?>("CategoryId")
+                        .HasColumnType("int");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CategoryId");
 
                     b.HasIndex("Name")
                         .IsUnique();
@@ -515,6 +648,28 @@ namespace Worklance.Infrastructure.Persistence.Migrations
                         .HasForeignKey("SkillId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("Worklance.Domain.Entities.AuthEntities.EmailOtp", b =>
+                {
+                    b.HasOne("Worklance.Domain.Entities.AuthEntities.User", "User")
+                        .WithMany("EmailOtps")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Worklance.Domain.Entities.AuthEntities.RefreshToken", b =>
+                {
+                    b.HasOne("Worklance.Domain.Entities.AuthEntities.User", "User")
+                        .WithMany("RefreshTokens")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Worklance.Domain.Entities.FreelancerCertification", b =>
@@ -610,6 +765,22 @@ namespace Worklance.Infrastructure.Persistence.Migrations
                     b.Navigation("Skill");
                 });
 
+            modelBuilder.Entity("Worklance.Domain.Entities.Skill", b =>
+                {
+                    b.HasOne("Worklance.Domain.Entities.Job.Category", "Category")
+                        .WithMany("Skills")
+                        .HasForeignKey("CategoryId");
+
+                    b.Navigation("Category");
+                });
+
+            modelBuilder.Entity("Worklance.Domain.Entities.AuthEntities.User", b =>
+                {
+                    b.Navigation("EmailOtps");
+
+                    b.Navigation("RefreshTokens");
+                });
+
             modelBuilder.Entity("Worklance.Domain.Entities.FreelancerProfile", b =>
                 {
                     b.Navigation("Certifications");
@@ -619,6 +790,11 @@ namespace Worklance.Infrastructure.Persistence.Migrations
                     b.Navigation("Languages");
 
                     b.Navigation("Portfolios");
+                });
+
+            modelBuilder.Entity("Worklance.Domain.Entities.Job.Category", b =>
+                {
+                    b.Navigation("Skills");
                 });
 
             modelBuilder.Entity("Worklance.Domain.Entities.Job.Job", b =>

@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using System.Text.Json;
 using Worklance.Application.DTOs.Jobs;
 using Worklance.Application.Exceptions;
@@ -28,11 +29,10 @@ public class JobService : IJobService
 
         if (request.SkillIds.Any())
         {
-            var validSkillIds = await _jobRepository.GetExistingSkillIdsAsync(request.SkillIds);
+            var validSkillIds = await _jobRepository.GetExistingSkillIdsAsync(request.SkillIds, request.CategoryId);
             var invalidIds = request.SkillIds.Except(validSkillIds).ToList();
             if (invalidIds.Any())
-                throw new ValidationException(
-                    $"Invalid skill ID(s): {string.Join(", ", invalidIds)}");
+                throw new ValidationException($"Invalid skill ID(s) or they do not belong to the selected category: {string.Join(", ", invalidIds)}");
         }
 
         if (request.JobType == JobType.Contract)
@@ -57,7 +57,6 @@ public class JobService : IJobService
         if (request.Deadline <= DateTime.UtcNow)
             throw new ValidationException("Deadline must be a future date.");
 
-        //Resolve ClientProfileId from the JWT userId
         var clientProfileId = await _jobRepository.GetClientProfileIdByUserIdAsync(userId);
         if (clientProfileId == 0)
             throw new NotFoundException("Client profile not found for the current user.");
@@ -78,13 +77,15 @@ public class JobService : IJobService
             Status = JobStatus.Open,
             JobSkills = request.SkillIds
                 .Select(skillId => new JobSkill { SkillId = skillId })
-                .ToList()
+                .ToList(),
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
         };
 
         await _jobRepository.AddAsync(job);
         await _unitOfWork.SaveChangesAsync();
 
-        var fullJob = await _jobRepository.GetJobWithDetailsAsync(job.JobId)
+        var fullJob = await _jobRepository.GetJobWithDetailsAsync(job.Id)
             ?? throw new NotFoundException("Job creation failed unexpectedly.");
 
         return MapToResponse(fullJob);
@@ -110,7 +111,7 @@ public class JobService : IJobService
     {
         return new JobResponse
         {
-            JobId = job.JobId,
+            JobId = job.Id,
             Title = job.Title,
             Description = job.Description,
             ClientProfileId = job.ClientProfileId,
@@ -130,5 +131,35 @@ public class JobService : IJobService
             AttachmentUrl = job.AttachmentUrl,
             CreatedAt = job.CreatedAt
         };
+    }
+
+    public async Task<IEnumerable<CategoryDto>> GetAllCategoriesAsync()
+    {
+        var categories = await _jobRepository.GetAllCategoriesAsync();
+        return categories.Select(c => new CategoryDto
+        {
+            Id = c.Id,
+            Name = c.Name,
+            Description = c.Description,
+            Skills = c.Skills.Select(s => new CategorySkillDto
+            {
+                Id = s.Id,
+                Name = s.Name
+            }).ToList()
+        });
+    }
+
+    public async Task<IEnumerable<CategorySkillDto>> GetSkillsByCategoryIdAsync(int categoryId)
+    {
+        var categoryExists = await _jobRepository.CategoryExistsAsync(categoryId);
+        if (!categoryExists)
+            throw new NotFoundException($"Category with ID {categoryId} not found.");
+
+        var skills = await _jobRepository.GetSkillsByCategoryIdAsync(categoryId);
+        return skills.Select(s => new CategorySkillDto
+        {
+            Id = s.Id,
+            Name = s.Name
+        });
     }
 }

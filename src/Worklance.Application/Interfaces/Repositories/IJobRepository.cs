@@ -12,7 +12,9 @@ namespace Worklance.Application.Interfaces.Repositories
         Task<Job?> GetJobWithDetailsAsync(int jobId); 
         Task<IReadOnlyList<Job>> GetAllJobsWithDetailsAsync();
         Task<bool> CategoryExistsAsync(int categoryId);
-        Task<List<int>> GetExistingSkillIdsAsync(List<int> skillIds);
+        Task<IReadOnlyList<Category>> GetAllCategoriesAsync();
+        Task<IReadOnlyList<Worklance.Domain.Entities.Skill>> GetSkillsByCategoryIdAsync(int categoryId);
+        Task<List<int>> GetExistingSkillIdsAsync(List<int> skillIds, int categoryId);
         Task<int> GetClientProfileIdByUserIdAsync(string userId);
     }
 }
