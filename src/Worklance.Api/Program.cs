@@ -21,6 +21,8 @@ public class Program
         builder.Services.AddInfrastructureServices(builder.Configuration);
         builder.Services.AddMemoryCache();
 
+        
+
         // Configure JWT Authentication
         var jwtSettings = builder.Configuration.GetSection("JwtSettings").Get<JwtSettings>() ?? new JwtSettings();
 

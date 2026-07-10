@@ -23,7 +23,7 @@ namespace Worklance.Domain.Entities.Job
 
         public DateTime Deadline { get; set; }
 
-        public string TagsJson { get; set; } = "[]";
+        public string Tags { get; set; } = "[]";
 
         public string? AttachmentUrl { get; set; }
 
@@ -33,6 +33,5 @@ namespace Worklance.Domain.Entities.Job
         public bool IsDeleted { get; set; } = false;
         public DateTime? DeletedAt { get; set; }
 
-        public DateTime? UpdatedAt { get; set; }
     }
 }

@@ -3,7 +3,7 @@ using Worklance.Domain.Enums.Job;
 
 namespace Worklance.Application.DTOs.Jobs
 {
-    public class CreateJobRequest
+    public class JobRequestBase
     {
         [Required, MaxLength(150)]
         public string Title { get; set; } = string.Empty;
@@ -33,4 +33,13 @@ namespace Worklance.Application.DTOs.Jobs
 
         public string? AttachmentUrl { get; set; }
     }
+
+    public class CreateJobRequest : JobRequestBase
+    {
+    }
+    public class UpdateJobRequest : JobRequestBase
+    {
+    }
+
+
 }

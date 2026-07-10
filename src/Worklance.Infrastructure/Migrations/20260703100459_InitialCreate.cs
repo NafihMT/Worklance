@@ -26,7 +26,7 @@ namespace Worklance.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "FreelancerProfiles",
+                name:   "FreelancerProfiles",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)

@@ -14,14 +14,15 @@ public class JobRepository : GenericRepository<Job>, IJobRepository
 
     public async Task<Job?> GetJobWithDetailsAsync(int jobId)
     {
+
         if (jobId <= 0)
             return null;
 
         return await _context.Jobs
             .Where(x => x.Id == jobId && !x.IsDeleted)
             .AsNoTracking()
-            .AsSplitQuery()
 
+            .AsSplitQuery()
             .Include(j => j.ClientProfile)
             .Include(j => j.Category)
             .Include(j => j.JobSkills)
@@ -34,8 +35,8 @@ public class JobRepository : GenericRepository<Job>, IJobRepository
         return await _context.Jobs
             .Where(j => !j.IsDeleted)
             .AsNoTracking()
-            .AsSplitQuery()
 
+            .AsSplitQuery()
             .Include(j => j.ClientProfile)
             .Include(j => j.Category)
             .Include(j => j.JobSkills)
@@ -84,5 +85,20 @@ public class JobRepository : GenericRepository<Job>, IJobRepository
             .Where(cp => cp.UserId == userId)
             .Select(cp => cp.Id)
             .FirstOrDefaultAsync();
+    }
+
+    public async Task<Job?> GetJobForUpdateAsync(int jobId)
+    {
+        return await _context.Jobs
+            .Include(j => j.JobSkills)
+            .FirstOrDefaultAsync(j => j.Id == jobId && !j.IsDeleted);
+    }
+    public async Task<bool> IsJobOwnedByClientAsync(int jobId, int clientProfileId)
+    {
+        return await _context.Jobs
+            .AnyAsync(j =>
+            j.Id == jobId &&
+            j.ClientProfileId == clientProfileId &&
+            !j.IsDeleted);
     }
 }

@@ -30,7 +30,7 @@ public class JobConfiguration : IEntityTypeConfiguration<Job>
         builder.Property(j => j.MaxHourlyRate)
             .HasColumnType("decimal(18,2)");
 
-        builder.Property(j => j.TagsJson)
+        builder.Property(j => j.Tags)
             .HasColumnName("Tags")
             .HasColumnType("nvarchar(max)");
 

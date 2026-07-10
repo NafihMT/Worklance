@@ -32,31 +32,15 @@ public class JobsController : ControllerBase
                 "Unauthorized Access",
                 StatusCodes.Status401Unauthorized));
 
-        try
-        {
-            var result = await _jobService.CreateJobAsync(userId, request);
-            return CreatedAtAction(
-                nameof(CreateJob),
-                new { id = result.JobId },
-                ApiResponse<JobResponse>.SuccessResponse(
-                    result,
-                    "Job Created Successfully",
-                    StatusCodes.Status201Created));
-        }
-        catch (ValidationException ex)
-        {
-            return BadRequest(
-                ApiResponse<object>.FailureResponse(
-                    ex.Message,
-                    StatusCodes.Status400BadRequest));
-        }
-        catch (NotFoundException ex)
-        {
-            return NotFound(
-                ApiResponse<object>.FailureResponse(
-                    ex.Message,
-                    StatusCodes.Status404NotFound));
-        }
+        var result = await _jobService.CreateJobAsync(userId, request);
+        return CreatedAtAction(
+            nameof(GetJobById),
+            new { id = result.JobId },
+            ApiResponse<JobResponse>.SuccessResponse(
+                result,
+                "Job Created Successfully",
+                StatusCodes.Status201Created));
+
     }
 
     [HttpGet]
@@ -67,7 +51,7 @@ public class JobsController : ControllerBase
         return Ok(ApiResponse<IEnumerable<JobResponse>>.SuccessResponse(
             jobs,
             "Job fetched Successfully"));
-            
+
     }
 
     [HttpGet("{id}")]
@@ -115,5 +99,72 @@ public class JobsController : ControllerBase
                 ex.Message,
                 StatusCodes.Status404NotFound));
         }
+    }
+
+    [HttpPut("{id}")]
+    [Authorize]
+    public async Task<IActionResult> UpdateJobAsync(int id, UpdateJobRequest request)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userId))
+            return Unauthorized();
+
+        var result = await _jobService.UpdateJobAsync(id, userId, request);
+
+        return Ok(ApiResponse<JobResponse>.SuccessResponse(
+            result,
+            "Job Updated Successfully"));
+    }
+
+    [HttpDelete("{id}")]
+    [Authorize]
+    public async Task<IActionResult> DeleteJob(int id)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        await _jobService.SoftDeleteJobAsync(id, userId);
+
+        return Ok(ApiResponse<object>.SuccessResponse(
+            null,
+            "Job deleted Successfully"));
+
+    }
+    
+    [HttpPatch("{id}/close")]
+    [Authorize]
+    public async Task<IActionResult> CloseJob(int id)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+
+        await _jobService.CloseJobAsync(id, userId);
+
+        return Ok(ApiResponse<object>.SuccessResponse(
+            null,
+            "Job closed successfully."));
+    }
+
+    [HttpPatch("{id}/reopen")]
+    [Authorize]
+    public async Task<IActionResult> ReopenJob(int id)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+
+        await _jobService.ReopenJobAsync(id, userId);
+
+        return Ok(ApiResponse<object>.SuccessResponse(
+            null,
+            "Job reopened successfully."));
+    }
+
+    [HttpPatch("{id}/cancel")]
+    [Authorize]
+    public async Task<IActionResult> CancelJob(int id)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+
+        await _jobService.CancelJobAsync(id, userId);
+
+        return Ok(ApiResponse<object>.SuccessResponse(
+            null,
+            "Job cancelled successfully."));
     }
 }

@@ -1,4 +1,3 @@
-using System.ComponentModel.DataAnnotations;
 using System.Text.Json;
 using Worklance.Application.DTOs.Jobs;
 using Worklance.Application.Exceptions;
@@ -22,40 +21,7 @@ public class JobService : IJobService
 
     public async Task<JobResponse> CreateJobAsync(string userId, CreateJobRequest request)
     {
-        // Check category exists
-        var categoryExists = await _jobRepository.CategoryExistsAsync(request.CategoryId);
-        if (!categoryExists)
-            throw new ValidationException("The selected category does not exist.");
-
-        if (request.SkillIds.Any())
-        {
-            var validSkillIds = await _jobRepository.GetExistingSkillIdsAsync(request.SkillIds, request.CategoryId);
-            var invalidIds = request.SkillIds.Except(validSkillIds).ToList();
-            if (invalidIds.Any())
-                throw new ValidationException($"Invalid skill ID(s) or they do not belong to the selected category: {string.Join(", ", invalidIds)}");
-        }
-
-        if (request.JobType == JobType.Contract)
-        {
-            if (request.FixedBudget is null or <= 0)
-                throw new ValidationException("Fixed budget is required for contract jobs.");
-        }
-
-        // Budget Validation
-        else if (request.JobType == JobType.Hourly)
-        {
-            if (request.MinHourlyRate is null || request.MaxHourlyRate is null)
-                throw new ValidationException("Min and max hourly rate are required for hourly jobs.");
-
-            if (request.MinHourlyRate <= 0 || request.MaxHourlyRate <= 0)
-                throw new ValidationException("Hourly rates must be greater than zero.");
-
-            if (request.MinHourlyRate > request.MaxHourlyRate)
-                throw new ValidationException("Min hourly rate cannot exceed max hourly rate.");
-        }
-
-        if (request.Deadline <= DateTime.UtcNow)
-            throw new ValidationException("Deadline must be a future date.");
+        await ValidateJobRequestAsync(request);
 
         var clientProfileId = await _jobRepository.GetClientProfileIdByUserIdAsync(userId);
         if (clientProfileId == 0)
@@ -72,14 +38,14 @@ public class JobService : IJobService
             MinHourlyRate = request.JobType == JobType.Hourly ? request.MinHourlyRate : null,
             MaxHourlyRate = request.JobType == JobType.Hourly ? request.MaxHourlyRate : null,
             Deadline = request.Deadline,
-            TagsJson = JsonSerializer.Serialize(request.Tags),
+            Tags = JsonSerializer.Serialize(request.Tags),
             AttachmentUrl = request.AttachmentUrl,
             Status = JobStatus.Open,
             JobSkills = request.SkillIds
                 .Select(skillId => new JobSkill { SkillId = skillId })
                 .ToList(),
             CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
+            LastModifiedAt = DateTime.UtcNow
         };
 
         await _jobRepository.AddAsync(job);
@@ -124,9 +90,9 @@ public class JobService : IJobService
             MinHourlyRate = job.MinHourlyRate,
             MaxHourlyRate = job.MaxHourlyRate,
             Deadline = job.Deadline,
-            Tags = string.IsNullOrWhiteSpace(job.TagsJson)
+            Tags = string.IsNullOrWhiteSpace(job.Tags)
                 ? new List<string>()
-                : JsonSerializer.Deserialize<List<string>>(job.TagsJson) ?? new List<string>(),
+                : JsonSerializer.Deserialize<List<string>>(job.Tags) ?? new List<string>(),
             Skills = job.JobSkills?.Select(js => js.Skill.Name).ToList() ?? new List<string>(),
             AttachmentUrl = job.AttachmentUrl,
             CreatedAt = job.CreatedAt
@@ -161,5 +127,174 @@ public class JobService : IJobService
             Id = s.Id,
             Name = s.Name
         });
+    }
+
+    
+
+    public async Task<JobResponse> UpdateJobAsync(int jobId, string userId, UpdateJobRequest request)
+    {
+        await ValidateJobRequestAsync(request);
+
+        var clientProfileId = await _jobRepository.GetClientProfileIdByUserIdAsync(userId);
+        if (clientProfileId == 0)
+            throw new NotFoundException("Client Profile Not Found");
+
+        var job = await _jobRepository.GetJobForUpdateAsync(jobId);
+        if (job == null)
+            throw new NotFoundException("Job not found");
+
+        if (job.ClientProfileId != clientProfileId)
+            throw new UnauthorizedAccessException("You are not allowed to edit this job");
+
+        if (job.Status != JobStatus.Open)
+            throw new BadRequestException("Only open jobs can be edited");
+
+
+        // Update fields
+
+        job.Title = request.Title.Trim();
+        job.Description = request.Description.Trim();
+        job.CategoryId = request.CategoryId;
+        job.JobType = request.JobType;
+        job.FixedBudget = request.JobType == JobType.Contract ? request.FixedBudget : null;
+        job.MinHourlyRate = request.JobType == JobType.Hourly ? request.MinHourlyRate : null;
+        job.MaxHourlyRate = request.JobType == JobType.Hourly ? request.MaxHourlyRate : null;
+        job.Deadline = request.Deadline;
+        job.AttachmentUrl = request.AttachmentUrl;
+        job.Tags = JsonSerializer.Serialize(request.Tags);
+
+        //Skills
+
+        job.JobSkills.Clear();
+        foreach(var skillId in request.SkillIds)
+        {
+            job.JobSkills.Add(new JobSkill { SkillId = skillId });
+        }
+
+        job.LastModifiedAt = DateTime.UtcNow;
+
+        await _unitOfWork.SaveChangesAsync();
+
+        var updated = await _jobRepository.GetJobWithDetailsAsync(job.Id);
+        if (updated is null)
+            throw new NotFoundException("Updated job could not be retrieved");
+
+        return MapToResponse(updated);
+
+    }
+
+    public async Task SoftDeleteJobAsync(int jobId, string userId)
+    {
+        var job = await GetOwnedJobAsync(jobId, userId);
+        if (job.IsDeleted)
+            throw new BadRequestException("Job is already deleted");
+
+        job.IsDeleted = true;
+        job.DeletedAt = DateTime.UtcNow;
+        job.LastModifiedAt = DateTime.UtcNow;
+
+        await _unitOfWork.SaveChangesAsync();
+   
+    }
+
+    public async Task CloseJobAsync(int jobId, string userId)
+    {
+        var job = await GetOwnedJobAsync(jobId, userId);
+        if (job.Status != JobStatus.Open)
+            throw new BadRequestException("Only open Job can be closed");
+
+        job.Status = JobStatus.Closed;
+        job.LastModifiedAt = DateTime.UtcNow;
+
+        await _unitOfWork.SaveChangesAsync();
+    }
+    public async Task ReopenJobAsync(int jobId, string userId)
+    {
+        var job = await GetOwnedJobAsync(jobId, userId);
+        if (job.Status != JobStatus.Closed)
+            throw new BadRequestException("Only Closed jobs can reopen");
+
+        job.Status = JobStatus.Open;
+        job.LastModifiedAt = DateTime.UtcNow;
+
+        await _unitOfWork.SaveChangesAsync();
+    }
+    public async Task CancelJobAsync(int jobId, string userId)
+    {
+        var job = await GetOwnedJobAsync(jobId, userId);
+        if (job.Status == JobStatus.Completed)
+            throw new BadRequestException("Completed jobs cannot be cancelled");
+
+        if (job.Status == JobStatus.Cancelled)
+            throw new BadRequestException("Job is already Cancelled");
+
+        job.Status = JobStatus.Cancelled;
+        job.LastModifiedAt = DateTime.UtcNow;
+
+        await _unitOfWork.SaveChangesAsync();
+    }
+
+    // Common Validations in Create and Update
+
+    private async Task ValidateJobRequestAsync(JobRequestBase request)
+    {
+        if (!Enum.IsDefined(typeof(JobType), request.JobType))
+            throw new BadRequestException("Invalid Job Type");
+        var categoryExists = await _jobRepository.CategoryExistsAsync(request.CategoryId);
+        if (!categoryExists)
+            throw new BadRequestException("The selected category does not exist.");
+
+        if (request.SkillIds.Any())
+        {
+            var validSkillIds = await _jobRepository.GetExistingSkillIdsAsync(
+                request.SkillIds,
+                request.CategoryId);
+
+            var invalidIds = request.SkillIds.Except(validSkillIds).ToList();
+
+            if (invalidIds.Any())
+            {
+                throw new BadRequestException(
+                    $"Invalid skill ID(s) or they do not belong to the selected category: {string.Join(", ", invalidIds)}");
+            }
+        }
+
+        if (request.JobType == JobType.Contract)
+        {
+            if (request.FixedBudget is null || request.FixedBudget <= 0)
+                throw new BadRequestException("Fixed budget is required for contract jobs.");
+        }
+        else if (request.JobType == JobType.Hourly)
+        {
+            if (request.MinHourlyRate is null || request.MaxHourlyRate is null)
+                throw new BadRequestException("Min and max hourly rate are required for hourly jobs.");
+
+            if (request.MinHourlyRate <= 0 || request.MaxHourlyRate <= 0)
+                throw new BadRequestException("Hourly rates must be greater than zero.");
+
+            if (request.MinHourlyRate > request.MaxHourlyRate)
+                throw new BadRequestException("Min hourly rate cannot exceed max hourly rate.");
+        }
+
+        if (request.Deadline <= DateTime.UtcNow)
+            throw new BadRequestException("Deadline must be a future date.");
+    }
+
+    // Get Owned Jobs - To reduce Duplications
+
+    private async Task<Job> GetOwnedJobAsync(int jobId, string userId)
+    {
+        var clientProfileId = await _jobRepository.GetClientProfileIdByUserIdAsync(userId);
+        if (clientProfileId == 0)
+            throw new NotFoundException("Client Profile Not Found");
+
+        var job = await _jobRepository.GetJobForUpdateAsync(jobId);
+        if (job == null)
+            throw new NotFoundException("Job Not Found");
+
+        if (job.ClientProfileId != clientProfileId)
+            throw new UnauthorizedAccessException("You're not allowed to Modify this job");
+
+        return job;
     }
 }

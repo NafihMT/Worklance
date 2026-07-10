@@ -1,8 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Worklance.Domain.Entities;
 using Worklance.Domain.Entities.Job;
 
 namespace Worklance.Application.Interfaces.Repositories
@@ -13,8 +9,11 @@ namespace Worklance.Application.Interfaces.Repositories
         Task<IReadOnlyList<Job>> GetAllJobsWithDetailsAsync();
         Task<bool> CategoryExistsAsync(int categoryId);
         Task<IReadOnlyList<Category>> GetAllCategoriesAsync();
-        Task<IReadOnlyList<Worklance.Domain.Entities.Skill>> GetSkillsByCategoryIdAsync(int categoryId);
+        Task<IReadOnlyList<Skill>> GetSkillsByCategoryIdAsync(int categoryId);
         Task<List<int>> GetExistingSkillIdsAsync(List<int> skillIds, int categoryId);
         Task<int> GetClientProfileIdByUserIdAsync(string userId);
+
+        Task<Job?> GetJobForUpdateAsync(int jobId);
+        Task<bool> IsJobOwnedByClientAsync(int jobId, int clientProfileId);
     }
 }
