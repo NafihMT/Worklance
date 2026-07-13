@@ -15,5 +15,7 @@ namespace Worklance.Application.Interfaces.Services
         Task CloseJobAsync(int jobId, string userId);
         Task ReopenJobAsync(int jobId, string userId);
         Task CancelJobAsync(int jobId, string userId);
+
+        Task<IEnumerable<JobResponse>> GetMyPostedJobsAsync(string userId);
     }
 }

@@ -234,6 +234,17 @@ public class JobService : IJobService
         await _unitOfWork.SaveChangesAsync();
     }
 
+    public async Task<IEnumerable<JobResponse>>GetMyPostedJobsAsync(string userId)
+    {
+        var clientProfileId = await _jobRepository.GetClientProfileIdByUserIdAsync(userId);
+        if (clientProfileId == 0)
+            throw new NotFoundException("Client profile not found");
+
+        var jobs = await _jobRepository.GetJobsByClientProfileIdAsync(clientProfileId);
+
+        return jobs.Select(MapToResponse);
+    }
+
     // Common Validations in Create and Update
 
     private async Task ValidateJobRequestAsync(JobRequestBase request)

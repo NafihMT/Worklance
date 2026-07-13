@@ -103,7 +103,7 @@ public class JobsController : ControllerBase
 
     [HttpPut("{id}")]
     [Authorize]
-    public async Task<IActionResult> UpdateJobAsync(int id, UpdateJobRequest request)
+    public async Task<IActionResult> UpdateJob(int id, UpdateJobRequest request)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (string.IsNullOrEmpty(userId))
@@ -166,5 +166,21 @@ public class JobsController : ControllerBase
         return Ok(ApiResponse<object>.SuccessResponse(
             null,
             "Job cancelled successfully."));
+    }
+
+    [HttpGet("my-jobs")]
+    [Authorize]
+    public async Task<IActionResult> GetMyPostedJobs()
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(userId))
+            return Unauthorized();
+
+        var jobs = await _jobService.GetMyPostedJobsAsync(userId);
+
+        return Ok(ApiResponse<IEnumerable<JobResponse>>.SuccessResponse(
+            jobs,
+            "Jobs retrieved successfully"));
+
     }
 }

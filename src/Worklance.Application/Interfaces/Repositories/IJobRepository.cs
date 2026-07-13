@@ -1,11 +1,12 @@
 using Worklance.Domain.Entities;
 using Worklance.Domain.Entities.Job;
+using Worklance.Domain.Enums.Job;
 
 namespace Worklance.Application.Interfaces.Repositories
 {
     public interface IJobRepository : IGenericRepository<Job>
     {
-        Task<Job?> GetJobWithDetailsAsync(int jobId); 
+        Task<Job?> GetJobWithDetailsAsync(int jobId);
         Task<IReadOnlyList<Job>> GetAllJobsWithDetailsAsync();
         Task<bool> CategoryExistsAsync(int categoryId);
         Task<IReadOnlyList<Category>> GetAllCategoriesAsync();
@@ -15,5 +16,7 @@ namespace Worklance.Application.Interfaces.Repositories
 
         Task<Job?> GetJobForUpdateAsync(int jobId);
         Task<bool> IsJobOwnedByClientAsync(int jobId, int clientProfileId);
+
+        Task<IReadOnlyList<Job>> GetJobsByClientProfileIdAsync(int clientProfileId, JobStatus? status);
     }
 }

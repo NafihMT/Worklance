@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Worklance.Application.Interfaces.Repositories;
 using Worklance.Domain.Entities;
 using Worklance.Domain.Entities.Job;
+using Worklance.Domain.Enums.Job;
 using Worklance.Infrastructure.Data;
 
 namespace Worklance.Infrastructure.Repositories;
@@ -100,5 +101,27 @@ public class JobRepository : GenericRepository<Job>, IJobRepository
             j.Id == jobId &&
             j.ClientProfileId == clientProfileId &&
             !j.IsDeleted);
+    }
+
+    public async Task<IReadOnlyList<Job>> GetJobsByClientProfileIdAsync(int clientProfileId, JobStatus? status)
+    {
+        // Filtering by Status
+        var query = _context.Jobs
+            .AsNoTracking()
+            .AsSplitQuery()
+            .Where(j => j.ClientProfileId == clientProfileId && !j.IsDeleted);
+
+        if (status.HasValue)
+        {
+            query = query.Where(j => j.Status == status.Value);
+        }
+
+        return await query
+            .Include(j => j.ClientProfile)
+            .Include(j => j.Category)
+            .Include(j => j.JobSkills)
+                .ThenInclude(js => js.Skill)
+            .OrderByDescending(j => j.CreatedAt)
+            .ToListAsync();
     }
 }
