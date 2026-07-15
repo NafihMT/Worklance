@@ -16,7 +16,9 @@ namespace Worklance.Domain.Entities.AuthEntities
         public string PhoneNumber { get; set; } = string.Empty;
         public string PasswordHash { get; set; } = string.Empty;
         public string AadhaarNumber { get; set; } = string.Empty;
-        public string AadhaarProofPath { get; set; } = string.Empty;
+        public byte[] AadhaarImageBytes { get; set; } = Array.Empty<byte>();
+
+        public bool IsOcrMatched { get; set; } = false;
         public AccountType AccountType { get; set; }
         public UserRole Role { get; set; } = UserRole.User;
         public bool EmailVerified { get; set; } = false;

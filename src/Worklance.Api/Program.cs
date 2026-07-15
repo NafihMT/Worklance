@@ -16,12 +16,11 @@ public class Program
     {
         var builder = WebApplication.CreateBuilder(args);
 
-        // Add services to the container.
         builder.Services.AddApplicationServices();
         builder.Services.AddInfrastructureServices(builder.Configuration);
         builder.Services.AddMemoryCache();
+        builder.Services.AddHostedService<Worklance.Api.BackgroundJobs.UnverifiedUserCleanupService>();
 
-        // Configure JWT Authentication
         var jwtSettings = builder.Configuration.GetSection("JwtSettings").Get<JwtSettings>() ?? new JwtSettings();
 
         builder.Services.AddAuthentication(options =>
@@ -72,14 +71,17 @@ public class Program
             {
                 options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
             });
+        builder.Services.Configure<Microsoft.AspNetCore.Mvc.ApiBehaviorOptions>(options =>
+        {
+            options.SuppressModelStateInvalidFilter = true;
+        });
+
         builder.Services.AddAuthorization();
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddCors();
 
         builder.Services.AddSwaggerGen(options =>
         {
-            options.OperationFilter<Worklance.Api.Infrastructure.Swagger.FileUploadOperationFilter>();
-            
             options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
             {
                 Type = SecuritySchemeType.Http,
@@ -94,6 +96,7 @@ public class Program
             });
         });
 
+
         var app = builder.Build();
         app.UseMiddleware<GlobalExceptionMiddleware>();
 
@@ -105,7 +108,6 @@ public class Program
 
         app.UseHttpsRedirection();
 
-        // Enable CORS
         app.UseCors(policy => policy
             .AllowAnyOrigin()
             .AllowAnyMethod()

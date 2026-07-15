@@ -38,7 +38,7 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.HasIndex(x => x.AadhaarNumber)
             .IsUnique();
 
-        builder.Property(x => x.AadhaarProofPath)
+        builder.Property(x => x.AadhaarImageBytes)
             .IsRequired();
 
         builder.Property(x => x.AccountType)

@@ -20,7 +20,7 @@ public class JobsController : ControllerBase
     }
 
     [HttpPost]
-    [Authorize(Roles = "Client,Worker")]
+    [Authorize(Roles = "1")]
     public async Task<IActionResult> CreateJob([FromBody] CreateJobRequest request)
     {
 

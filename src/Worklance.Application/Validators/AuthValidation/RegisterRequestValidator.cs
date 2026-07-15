@@ -13,8 +13,9 @@ namespace Worklance.Application.Validators.AuthValidation
         public RegisterRequestValidator()
         {
             RuleFor(x => x.FullName)
-                .NotEmpty()
-                .MaximumLength(100);
+           .NotEmpty().WithMessage("Full Name is required.")
+           .MinimumLength(3).WithMessage("Enter a valid Full Name")
+           .Matches(@"^[a-zA-Z\s]+$").WithMessage("Full name cannot contain special characters or numbers. Please enter a valid full name.");
 
             RuleFor(x => x.Email)
                 .NotEmpty()
@@ -37,8 +38,8 @@ namespace Worklance.Application.Validators.AuthValidation
                 .NotEmpty()
                 .Length(12)
                 .Matches(@"^\d{12}$");
-            RuleFor(x => x.AadhaarProof)
-                .NotEmpty();
+            RuleFor(x => x.AadhaarImageBytes)
+                .NotEmpty().WithMessage("Aadhaar Image is required");
             RuleFor(x => x.AccountType)
                 .IsInEnum();
         }

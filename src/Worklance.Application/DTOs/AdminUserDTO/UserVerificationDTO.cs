@@ -14,7 +14,8 @@ namespace Worklance.Application.DTOs.AdminUserDTO
         public string PhoneNumber { get; set; } = string.Empty;
         public string AccountType { get; set; } = string.Empty; 
         public string AadhaarNumber { get; set; } = string.Empty;
-        public string AadhaarProofPath { get; set; } = string.Empty;
         public DateTime RegisteredAt { get; set; }
+
+        public string OcrStatus { get; set; } = string.Empty;
     }
 }

@@ -16,14 +16,20 @@ namespace Worklance.Infrastructure.Repositories
             _context = context;
         }
 
-        public async Task<bool> UpdateStatusAsync(string userId, Worklance.Domain.Enums.VerificationStatus status, string? reason)
+        public async Task<(bool IsSuccess, string? ErrorMessage)> UpdateStatusAsync(string userId, Worklance.Domain.Enums.VerificationStatus status, string? reason)
         {
-            if (!int.TryParse(userId, out int parsedUserId)) return false;
+            if (!int.TryParse(userId, out int parsedUserId))
+                return (false, "Invalid user ID format.");
 
             var user = await _context.Users.FindAsync(parsedUserId);
-            if (user == null) return false;
+            if (user == null)
+                return (false, $"Verification record for User {userId} not found.");
 
-            // Update AdminVerificationStatus based on the verification status
+            if (user.Role == Worklance.Domain.Enums.AuthEnums.UserRole.Admin)
+            {
+                return (false, "Action Denied: You cannot update the verification status of another Admin.");
+            }
+
             if (status == Worklance.Domain.Enums.VerificationStatus.Approved)
             {
                 user.AdminVerificationStatus = Worklance.Domain.Enums.AuthEnums.AdminVerificationStatus.Approved;
@@ -39,8 +45,8 @@ namespace Worklance.Infrastructure.Repositories
 
             _context.Users.Update(user);
             await _context.SaveChangesAsync();
-            
-            return true;
+
+            return (true, null);
         }
     }
 }
