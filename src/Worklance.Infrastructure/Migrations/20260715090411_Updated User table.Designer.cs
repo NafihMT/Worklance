@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Worklance.Infrastructure.Data;
 
@@ -11,9 +12,11 @@ using Worklance.Infrastructure.Data;
 namespace Worklance.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260715090411_Updated User table")]
+    partial class UpdatedUsertable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -35,63 +38,6 @@ namespace Worklance.Infrastructure.Migrations
                     b.HasIndex("SkillId");
 
                     b.ToTable("FreelancerSkills", (string)null);
-                });
-
-            modelBuilder.Entity("Worklance.Domain.Entities.AuthEntities.EmailOtp", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("ExpiresAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<bool>("IsUsed")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("OtpCode")
-                        .IsRequired()
-                        .HasMaxLength(6)
-                        .HasColumnType("nvarchar(6)");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("EmailOtps");
-                });
-
-            modelBuilder.Entity("Worklance.Domain.Entities.AuthEntities.RefreshToken", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("ExpiresAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<bool>("IsRevoked")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("Token")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("RefreshTokens");
                 });
 
             modelBuilder.Entity("Worklance.Domain.Entities.AuthEntities.EmailOtp", b =>
@@ -677,17 +623,12 @@ namespace Worklance.Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int?>("CategoryId")
-                        .HasColumnType("int");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("CategoryId");
 
                     b.HasIndex("Name")
                         .IsUnique();
@@ -825,15 +766,6 @@ namespace Worklance.Infrastructure.Migrations
                     b.Navigation("Skill");
                 });
 
-            modelBuilder.Entity("Worklance.Domain.Entities.Skill", b =>
-                {
-                    b.HasOne("Worklance.Domain.Entities.Job.Category", "Category")
-                        .WithMany("Skills")
-                        .HasForeignKey("CategoryId");
-
-                    b.Navigation("Category");
-                });
-
             modelBuilder.Entity("Worklance.Domain.Entities.AuthEntities.User", b =>
                 {
                     b.Navigation("EmailOtps");
@@ -850,11 +782,6 @@ namespace Worklance.Infrastructure.Migrations
                     b.Navigation("Languages");
 
                     b.Navigation("Portfolios");
-                });
-
-            modelBuilder.Entity("Worklance.Domain.Entities.Job.Category", b =>
-                {
-                    b.Navigation("Skills");
                 });
 
             modelBuilder.Entity("Worklance.Domain.Entities.Job.Job", b =>

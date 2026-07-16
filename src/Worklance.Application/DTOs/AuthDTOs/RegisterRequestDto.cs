@@ -20,9 +20,7 @@ namespace Worklance.Application.DTOs.AuthDTOs
         public string Password { get; set; } = string.Empty;
         public string ConfirmPassword { get; set; } = string.Empty;
         public string AadhaarNumber { get; set; } = string.Empty;
-        
-        public string AadhaarProof { get; set; } = string.Empty;
-        
+        public byte[] AadhaarImageBytes { get; set; }
         public AccountType AccountType { get; set; }
     }
 }

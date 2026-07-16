@@ -17,12 +17,11 @@ public class Program
     {
         var builder = WebApplication.CreateBuilder(args);
 
-        // Add services to the container.
         builder.Services.AddApplicationServices();
         builder.Services.AddInfrastructureServices(builder.Configuration);
         builder.Services.AddMemoryCache();
+        builder.Services.AddHostedService<Worklance.Api.BackgroundJobs.UnverifiedUserCleanupService>();
 
-        // Configure JWT Authentication
         var jwtSettings = builder.Configuration.GetSection("JwtSettings").Get<JwtSettings>() ?? new JwtSettings();
 
         builder.Services.AddAuthentication(options =>
@@ -98,38 +97,18 @@ public class Program
             .AddJsonOptions(options =>
             {
                 options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
-                options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
             });
-
-        // Wrap DataAnnotation ModelState errors into ApiResponse format
         builder.Services.Configure<Microsoft.AspNetCore.Mvc.ApiBehaviorOptions>(options =>
         {
-            options.InvalidModelStateResponseFactory = context =>
-            {
-                var errors = context.ModelState
-                    .Where(e => e.Value?.Errors.Count > 0)
-                    .SelectMany(e => e.Value!.Errors.Select(err =>
-                        string.IsNullOrEmpty(err.ErrorMessage)
-                            ? $"{e.Key} is invalid."
-                            : err.ErrorMessage))
-                    .ToList();
-
-                var response = ApiResponse<object>.Failure(
-                    "Validation failed.",
-                    StatusCodes.Status400BadRequest,
-                    errors);
-
-                return new Microsoft.AspNetCore.Mvc.BadRequestObjectResult(response);
-            };
+            options.SuppressModelStateInvalidFilter = true;
         });
+
         builder.Services.AddAuthorization();
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddCors();
 
         builder.Services.AddSwaggerGen(options =>
         {
-            options.OperationFilter<Worklance.Api.Infrastructure.Swagger.FileUploadOperationFilter>();
-
             options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
             {
                 Type = SecuritySchemeType.Http,
@@ -144,6 +123,7 @@ public class Program
             });
         });
 
+
         var app = builder.Build();
         app.UseMiddleware<GlobalExceptionMiddleware>();
 
@@ -155,7 +135,6 @@ public class Program
 
         app.UseHttpsRedirection();
 
-        // Enable CORS
         app.UseCors(policy => policy
             .AllowAnyOrigin()
             .AllowAnyMethod()

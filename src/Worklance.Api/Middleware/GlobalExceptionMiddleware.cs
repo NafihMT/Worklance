@@ -72,7 +72,7 @@ namespace Worklance.Api.Middleware
 
             context.Response.StatusCode = statusCode;
 
-            var response = ApiResponse<object>.Failure(
+            var response = ApiResponse.Failure(
                 message,
                 statusCode);
 
