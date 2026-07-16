@@ -25,7 +25,7 @@ namespace Worklance.Api.Controllers
         public async Task<IActionResult> GetPendingVerifications()
         {
             var pendingUsers = await _adminQuery.GetPendingVerificationsAsync();
-            return Ok(ApiResponse<IEnumerable<UserVerificationDTO>>.SuccessResponse(pendingUsers, "Pending verifications retrieved successfully.", 200));
+            return Ok(ApiResponse<IEnumerable<UserVerificationDTO>>.Success(pendingUsers, "Pending verifications retrieved successfully.", 200));
         }
 
         [HttpPut("{userId}/status")]
@@ -35,15 +35,15 @@ namespace Worklance.Api.Controllers
         {
             if (request.Status == Domain.Enums.VerificationStatus.Rejected && string.IsNullOrWhiteSpace(request.Reason))
             {
-                return BadRequest(ApiResponse<string>.FailureResponse("A reason is required when rejecting a user.", 400));
+                return BadRequest(ApiResponse<string>.Failure("A reason is required when rejecting a user.", 400));
             }
             var success = await _repository.UpdateStatusAsync(userId, request.Status, request.Reason);
 
             if (!success)
             {
-                return NotFound(ApiResponse<string>.FailureResponse($"Verification record for User {userId} not found.", 404));
+                return NotFound(ApiResponse<string>.Failure($"Verification record for User {userId} not found.", 404));
             }
-            return Ok(ApiResponse<string>.SuccessResponse($"User {userId} status updated to {request.Status}.", "Success", 200));
+            return Ok(ApiResponse<string>.Success($"User {userId} status updated to {request.Status}.", "Success", 200));
         }
     }
 }

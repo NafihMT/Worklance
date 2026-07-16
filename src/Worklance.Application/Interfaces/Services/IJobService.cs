@@ -1,4 +1,5 @@
 using Worklance.Application.DTOs.Jobs;
+using Worklance.Domain.Enums.Job;
 
 namespace Worklance.Application.Interfaces.Services
 {
@@ -16,6 +17,6 @@ namespace Worklance.Application.Interfaces.Services
         Task ReopenJobAsync(int jobId, string userId);
         Task CancelJobAsync(int jobId, string userId);
 
-        Task<IEnumerable<JobResponse>> GetMyPostedJobsAsync(string userId);
+        Task<IEnumerable<JobResponse>> GetMyPostedJobsAsync(string userId, JobStatus? status);
     }
 }

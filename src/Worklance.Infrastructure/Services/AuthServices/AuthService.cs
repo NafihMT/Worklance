@@ -77,7 +77,7 @@ namespace Worklance.Infrastructure.Services.AuthServices
 
             await _emailService.SendOtpAsync(request.Email, otp);
 
-            return ApiResponse<string>.SuccessResponse(
+            return ApiResponse<string>.Success(
                 "Registration successful. OTP has been sent to your email.",
                 "Success",
                 201);
@@ -206,7 +206,7 @@ namespace Worklance.Infrastructure.Services.AuthServices
                 RefreshToken = refreshTokenEntity.Token
             };
 
-            return ApiResponse<LoginResponseDto>.SuccessResponse(response, "Email verified successfully.", 200);
+            return ApiResponse<LoginResponseDto>.Success(response, "Email verified successfully.", 200);
         }
         private EmailOtp CreateEmailOtp(User user,string otp)
         {
@@ -253,7 +253,7 @@ namespace Worklance.Infrastructure.Services.AuthServices
                 RefreshToken = refreshTokenEntity.Token
             };
 
-            return ApiResponse<LoginResponseDto>.SuccessResponse(response, "Login successful.", 200);
+            return ApiResponse<LoginResponseDto>.Success(response, "Login successful.", 200);
         }
         public async Task<ApiResponse<RefreshTokenResponseDto>> RefreshTokenAsync(RefreshTokenRequestDto request)
         {
@@ -281,7 +281,7 @@ namespace Worklance.Infrastructure.Services.AuthServices
                 RefreshToken = newRefreshTokenEntity.Token
             };
 
-            return ApiResponse<RefreshTokenResponseDto>.SuccessResponse(response, "Token refreshed successfully.", 200);
+            return ApiResponse<RefreshTokenResponseDto>.Success(response, "Token refreshed successfully.", 200);
         }
         public async Task<ApiResponse<string>> ForgotPasswordAsync(ForgotPasswordRequestDto request)
         {
@@ -306,7 +306,7 @@ namespace Worklance.Infrastructure.Services.AuthServices
 
             await _emailService.SendOtpAsync(user.Email, otp);
 
-            return ApiResponse<string>.SuccessResponse("Password reset OTP has been sent to your email.", "Success", 200);
+            return ApiResponse<string>.Success("Password reset OTP has been sent to your email.", "Success", 200);
         }
         public async Task<ApiResponse<string>> ResetPasswordAsync(ResetPasswordRequestDto request)
         {
@@ -335,7 +335,7 @@ namespace Worklance.Infrastructure.Services.AuthServices
             await _authRepository.UpdateUserAsync(user);
             await _authRepository.SaveChangesAsync();
 
-            return ApiResponse<string>.SuccessResponse("Password has been reset successfully.", "Success", 200);
+            return ApiResponse<string>.Success("Password has been reset successfully.", "Success", 200);
         }
 
         public async Task<ApiResponse<string>> LogoutAsync(string refreshToken)
@@ -349,7 +349,7 @@ namespace Worklance.Infrastructure.Services.AuthServices
                 await _authRepository.SaveChangesAsync();
             }
 
-            return ApiResponse<string>.SuccessResponse("Logged out successfully.", "Success", 200);
+            return ApiResponse<string>.Success("Logged out successfully.", "Success", 200);
         }
     }
 

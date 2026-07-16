@@ -11,11 +11,10 @@ namespace Worklance.Application.Interfaces.Repositories
         Task<bool> CategoryExistsAsync(int categoryId);
         Task<IReadOnlyList<Category>> GetAllCategoriesAsync();
         Task<IReadOnlyList<Skill>> GetSkillsByCategoryIdAsync(int categoryId);
-        Task<List<int>> GetExistingSkillIdsAsync(List<int> skillIds, int categoryId);
-        Task<int> GetClientProfileIdByUserIdAsync(string userId);
+        Task<IReadOnlyList<int>> GetExistingSkillIdsAsync(List<int> skillIds, int categoryId);
 
-        Task<Job?> GetJobForUpdateAsync(int jobId);
-        Task<bool> IsJobOwnedByClientAsync(int jobId, int clientProfileId);
+        Task<int> GetClientProfileIdByUserIdAsync(string userId);
+        Task<Job?> GetJobForUpdateAsync(int jobId, string userId);
 
         Task<IReadOnlyList<Job>> GetJobsByClientProfileIdAsync(int clientProfileId, JobStatus? status);
     }

@@ -36,8 +36,8 @@ namespace Worklance.Api.Controllers.AuthController
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromForm, Bind("FullName", "Email", "PhoneNumber", "Password", "ConfirmPassword", "AadhaarNumber", "AccountType")] RegisterRequestDto request)
         {
-     
-            
+
+
             var AadhaarProof = Request.Form.Files["AadhaarProof"];
             if (AadhaarProof == null || AadhaarProof.Length == 0)
             {
@@ -78,7 +78,7 @@ namespace Worklance.Api.Controllers.AuthController
         public async Task<IActionResult> VerifyOtp(VerifyOtpRequestDto request)
         {
             var response = await _authService.VerifyOtpAsync(request);
-            if (response.Success && response.Data != null)
+            if (response.IsSuccess && response.Data != null)
             {
                 SetTokensInCookies(response.Data.AccessToken, response.Data.RefreshToken);
             }
@@ -89,7 +89,7 @@ namespace Worklance.Api.Controllers.AuthController
         public async Task<IActionResult> Login([FromForm] LoginRequestDto request)
         {
             var response = await _authService.LoginAsync(request);
-            if (response.Success && response.Data != null)
+            if (response.IsSuccess && response.Data != null)
             {
                 SetTokensInCookies(response.Data.AccessToken, response.Data.RefreshToken);
             }
@@ -102,13 +102,13 @@ namespace Worklance.Api.Controllers.AuthController
             var refreshToken = Request.Cookies["refreshToken"];
             if (string.IsNullOrWhiteSpace(refreshToken))
             {
-                return BadRequest(Worklance.Application.Common.ApiResponse.ApiResponse<string>.FailureResponse("Refresh token is missing from cookies.", 400));
+                return BadRequest(Worklance.Application.Common.ApiResponse.ApiResponse<string>.Failure("Refresh token is missing from cookies.", 400));
             }
 
             var request = new RefreshTokenRequestDto { RefreshToken = refreshToken };
             var response = await _authService.RefreshTokenAsync(request);
 
-            if (response.Success && response.Data != null)
+            if (response.IsSuccess && response.Data != null)
             {
                 SetTokensInCookies(response.Data.AccessToken, response.Data.RefreshToken);
             }
@@ -142,7 +142,7 @@ namespace Worklance.Api.Controllers.AuthController
             }
 
             ClearCookies();
-            return Ok(Worklance.Application.Common.ApiResponse.ApiResponse<string>.SuccessResponse("Logged out successfully.", "Success", 200));
+            return Ok(Worklance.Application.Common.ApiResponse.ApiResponse<string>.Success("Logged out successfully.", "Success", 200));
         }
 
         [HttpPost("forgot-password")]

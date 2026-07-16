@@ -20,10 +20,10 @@ public class JobRepository : GenericRepository<Job>, IJobRepository
             return null;
 
         return await _context.Jobs
-            .Where(x => x.Id == jobId && !x.IsDeleted)
             .AsNoTracking()
-
             .AsSplitQuery()
+            .Where(x => x.Id == jobId && !x.IsDeleted)
+
             .Include(j => j.ClientProfile)
             .Include(j => j.Category)
             .Include(j => j.JobSkills)
@@ -34,8 +34,8 @@ public class JobRepository : GenericRepository<Job>, IJobRepository
     public async Task<IReadOnlyList<Job>> GetAllJobsWithDetailsAsync()
     {
         return await _context.Jobs
-            .Where(j => !j.IsDeleted)
             .AsNoTracking()
+            .Where(j => !j.IsDeleted)
 
             .AsSplitQuery()
             .Include(j => j.ClientProfile)
@@ -70,7 +70,7 @@ public class JobRepository : GenericRepository<Job>, IJobRepository
             .ToListAsync();
     }
 
-    public async Task<List<int>> GetExistingSkillIdsAsync(List<int> skillIds, int categoryId)
+    public async Task<IReadOnlyList<int>> GetExistingSkillIdsAsync(List<int> skillIds, int categoryId)
     {
         return await _context.Skills
             .AsNoTracking()
@@ -88,20 +88,17 @@ public class JobRepository : GenericRepository<Job>, IJobRepository
             .FirstOrDefaultAsync();
     }
 
-    public async Task<Job?> GetJobForUpdateAsync(int jobId)
+    public async Task<Job?> GetJobForUpdateAsync(int jobId, string userId)
     {
         return await _context.Jobs
             .Include(j => j.JobSkills)
-            .FirstOrDefaultAsync(j => j.Id == jobId && !j.IsDeleted);
+            .Include(j => j.ClientProfile)
+            .FirstOrDefaultAsync(j =>
+                j.Id == jobId &&
+                !j.IsDeleted &&
+                j.ClientProfile.UserId == userId);
     }
-    public async Task<bool> IsJobOwnedByClientAsync(int jobId, int clientProfileId)
-    {
-        return await _context.Jobs
-            .AnyAsync(j =>
-            j.Id == jobId &&
-            j.ClientProfileId == clientProfileId &&
-            !j.IsDeleted);
-    }
+
 
     public async Task<IReadOnlyList<Job>> GetJobsByClientProfileIdAsync(int clientProfileId, JobStatus? status)
     {

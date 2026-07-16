@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Microsoft.AspNetCore.Http;
+using System.ComponentModel.DataAnnotations;
 using Worklance.Domain.Enums.Job;
 
 namespace Worklance.Application.DTOs.Jobs
@@ -31,7 +32,7 @@ namespace Worklance.Application.DTOs.Jobs
 
         public List<string> Tags { get; set; } = new();
 
-        public string? AttachmentUrl { get; set; }
+        public IFormFile? AttachmentUrl { get; set; }
     }
 
     public class CreateJobRequest : JobRequestBase

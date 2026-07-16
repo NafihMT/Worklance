@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Worklance.Application.DTOs.Jobs;
 using Worklance.Application.Exceptions;
+using Worklance.Application.Interfaces.CloudinaryInterface;
 using Worklance.Application.Interfaces.Repositories;
 using Worklance.Application.Interfaces.Services;
 using Worklance.Domain.Entities.Job;
@@ -12,13 +13,13 @@ public class JobService : IJobService
 {
     private readonly IJobRepository _jobRepository;
     private readonly IUnitOfWork _unitOfWork;
-
-    public JobService(IJobRepository jobRepository, IUnitOfWork unitOfWork)
+    private readonly ICloudinaryService _cloudinaryService;
+    public JobService(IJobRepository jobRepository, IUnitOfWork unitOfWork, ICloudinaryService cloudinaryService)
     {
         _jobRepository = jobRepository;
         _unitOfWork = unitOfWork;
+        _cloudinaryService = cloudinaryService;
     }
-
     public async Task<JobResponse> CreateJobAsync(string userId, CreateJobRequest request)
     {
         await ValidateJobRequestAsync(request);
@@ -26,6 +27,15 @@ public class JobService : IJobService
         var clientProfileId = await _jobRepository.GetClientProfileIdByUserIdAsync(userId);
         if (clientProfileId == 0)
             throw new NotFoundException("Client profile not found for the current user.");
+
+        string? attachmentUrlString = null;
+        if (request.AttachmentUrl != null && request.AttachmentUrl.Length > 0)
+        {
+            using (var stream = request.AttachmentUrl.OpenReadStream())
+            {
+                attachmentUrlString = await _cloudinaryService.UploadFileAsync(stream, request.AttachmentUrl.FileName, "worklance/attachments");
+            }
+        }
 
         var job = new Job
         {
@@ -39,7 +49,7 @@ public class JobService : IJobService
             MaxHourlyRate = request.JobType == JobType.Hourly ? request.MaxHourlyRate : null,
             Deadline = request.Deadline,
             Tags = JsonSerializer.Serialize(request.Tags),
-            AttachmentUrl = request.AttachmentUrl,
+            AttachmentUrl = attachmentUrlString,
             Status = JobStatus.Open,
             JobSkills = request.SkillIds
                 .Select(skillId => new JobSkill { SkillId = skillId })
@@ -133,22 +143,25 @@ public class JobService : IJobService
 
     public async Task<JobResponse> UpdateJobAsync(int jobId, string userId, UpdateJobRequest request)
     {
-        await ValidateJobRequestAsync(request);
+        var job = await GetOwnedJobAsync(jobId, userId);
 
-        var clientProfileId = await _jobRepository.GetClientProfileIdByUserIdAsync(userId);
-        if (clientProfileId == 0)
-            throw new NotFoundException("Client Profile Not Found");
-
-        var job = await _jobRepository.GetJobForUpdateAsync(jobId);
         if (job == null)
-            throw new NotFoundException("Job not found");
-
-        if (job.ClientProfileId != clientProfileId)
-            throw new UnauthorizedAccessException("You are not allowed to edit this job");
+            throw new NotFoundException("Job not found or you don't have permission.");
 
         if (job.Status != JobStatus.Open)
-            throw new BadRequestException("Only open jobs can be edited");
+            throw new BadRequestException("Only open jobs can be edited.");
 
+        await ValidateJobRequestAsync(request);
+
+
+        string? attachmentUrlString = job.AttachmentUrl;
+        if (request.AttachmentUrl != null && request.AttachmentUrl.Length > 0)
+        {
+            using (var stream = request.AttachmentUrl.OpenReadStream())
+            {
+                attachmentUrlString = await _cloudinaryService.UploadFileAsync(stream, request.AttachmentUrl.FileName, "worklance/attachments");
+            }
+        }
 
         // Update fields
 
@@ -160,7 +173,7 @@ public class JobService : IJobService
         job.MinHourlyRate = request.JobType == JobType.Hourly ? request.MinHourlyRate : null;
         job.MaxHourlyRate = request.JobType == JobType.Hourly ? request.MaxHourlyRate : null;
         job.Deadline = request.Deadline;
-        job.AttachmentUrl = request.AttachmentUrl;
+        job.AttachmentUrl = attachmentUrlString;
         job.Tags = JsonSerializer.Serialize(request.Tags);
 
         //Skills
@@ -172,6 +185,7 @@ public class JobService : IJobService
         }
 
         job.LastModifiedAt = DateTime.UtcNow;
+        job.LastModifiedBy = userId;
 
         await _unitOfWork.SaveChangesAsync();
 
@@ -192,6 +206,7 @@ public class JobService : IJobService
         job.IsDeleted = true;
         job.DeletedAt = DateTime.UtcNow;
         job.LastModifiedAt = DateTime.UtcNow;
+        job.LastModifiedBy = userId;
 
         await _unitOfWork.SaveChangesAsync();
    
@@ -205,6 +220,7 @@ public class JobService : IJobService
 
         job.Status = JobStatus.Closed;
         job.LastModifiedAt = DateTime.UtcNow;
+        job.LastModifiedBy = userId;
 
         await _unitOfWork.SaveChangesAsync();
     }
@@ -216,6 +232,7 @@ public class JobService : IJobService
 
         job.Status = JobStatus.Open;
         job.LastModifiedAt = DateTime.UtcNow;
+        job.LastModifiedBy = userId;
 
         await _unitOfWork.SaveChangesAsync();
     }
@@ -230,22 +247,23 @@ public class JobService : IJobService
 
         job.Status = JobStatus.Cancelled;
         job.LastModifiedAt = DateTime.UtcNow;
+        job.LastModifiedBy = userId;
 
         await _unitOfWork.SaveChangesAsync();
     }
 
-    public async Task<IEnumerable<JobResponse>>GetMyPostedJobsAsync(string userId)
+    public async Task<IEnumerable<JobResponse>>GetMyPostedJobsAsync(string userId, JobStatus? status)
     {
         var clientProfileId = await _jobRepository.GetClientProfileIdByUserIdAsync(userId);
         if (clientProfileId == 0)
             throw new NotFoundException("Client profile not found");
 
-        var jobs = await _jobRepository.GetJobsByClientProfileIdAsync(clientProfileId);
+        var jobs = await _jobRepository.GetJobsByClientProfileIdAsync(clientProfileId, status);
 
         return jobs.Select(MapToResponse);
     }
 
-    // Common Validations in Create and Update
+    // Helper Functions
 
     private async Task ValidateJobRequestAsync(JobRequestBase request)
     {
@@ -259,7 +277,8 @@ public class JobService : IJobService
         {
             var validSkillIds = await _jobRepository.GetExistingSkillIdsAsync(
                 request.SkillIds,
-                request.CategoryId);
+                request.CategoryId  
+                );
 
             var invalidIds = request.SkillIds.Except(validSkillIds).ToList();
 
@@ -291,20 +310,12 @@ public class JobService : IJobService
             throw new BadRequestException("Deadline must be a future date.");
     }
 
-    // Get Owned Jobs - To reduce Duplications
 
     private async Task<Job> GetOwnedJobAsync(int jobId, string userId)
-    {
-        var clientProfileId = await _jobRepository.GetClientProfileIdByUserIdAsync(userId);
-        if (clientProfileId == 0)
-            throw new NotFoundException("Client Profile Not Found");
-
-        var job = await _jobRepository.GetJobForUpdateAsync(jobId);
+    {   
+        var job = await _jobRepository.GetJobForUpdateAsync(jobId, userId);
         if (job == null)
-            throw new NotFoundException("Job Not Found");
-
-        if (job.ClientProfileId != clientProfileId)
-            throw new UnauthorizedAccessException("You're not allowed to Modify this job");
+            throw new ForbiddenException("Job not found or you don't have permission to modify it.");
 
         return job;
     }

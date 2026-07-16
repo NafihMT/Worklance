@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Worklance.Infrastructure.Settings;
+using Worklance.Application.Common.ApiResponse;
 
 namespace Worklance.API;
 
@@ -20,8 +21,6 @@ public class Program
         builder.Services.AddApplicationServices();
         builder.Services.AddInfrastructureServices(builder.Configuration);
         builder.Services.AddMemoryCache();
-
-        
 
         // Configure JWT Authentication
         var jwtSettings = builder.Configuration.GetSection("JwtSettings").Get<JwtSettings>() ?? new JwtSettings();
@@ -56,10 +55,36 @@ public class Program
                     }
                     return Task.CompletedTask;
                 },
-                OnAuthenticationFailed = context =>
+                OnAuthenticationFailed = async context =>
                 {
-                    Console.WriteLine("OnAuthenticationFailed: " + context.Exception.Message);
-                    return Task.CompletedTask;
+                    context.NoResult();
+                    context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                    context.Response.ContentType = "application/json";
+                    string message = "Please login.";
+
+                    if (context.Exception is SecurityTokenExpiredException)
+                    {
+                        message = "Session expired. Please login again.";
+                    }
+
+                    await context.Response.WriteAsJsonAsync(
+                        ApiResponse<object>.Failure(
+                            message,
+                            StatusCodes.Status401Unauthorized));
+                },
+                OnChallenge = async context =>
+                {
+                    if (context.Response.HasStarted)
+                        return;
+                    context.HandleResponse();
+
+                    context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                    context.Response.ContentType = "application/json";
+
+                    await context.Response.WriteAsJsonAsync(
+                        ApiResponse<object>.Failure(
+                            "Please Login",
+                            StatusCodes.Status401Unauthorized));
                 },
                 OnTokenValidated = context =>
                 {
@@ -73,7 +98,30 @@ public class Program
             .AddJsonOptions(options =>
             {
                 options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
+                options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
             });
+
+        // Wrap DataAnnotation ModelState errors into ApiResponse format
+        builder.Services.Configure<Microsoft.AspNetCore.Mvc.ApiBehaviorOptions>(options =>
+        {
+            options.InvalidModelStateResponseFactory = context =>
+            {
+                var errors = context.ModelState
+                    .Where(e => e.Value?.Errors.Count > 0)
+                    .SelectMany(e => e.Value!.Errors.Select(err =>
+                        string.IsNullOrEmpty(err.ErrorMessage)
+                            ? $"{e.Key} is invalid."
+                            : err.ErrorMessage))
+                    .ToList();
+
+                var response = ApiResponse<object>.Failure(
+                    "Validation failed.",
+                    StatusCodes.Status400BadRequest,
+                    errors);
+
+                return new Microsoft.AspNetCore.Mvc.BadRequestObjectResult(response);
+            };
+        });
         builder.Services.AddAuthorization();
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddCors();
@@ -81,7 +129,7 @@ public class Program
         builder.Services.AddSwaggerGen(options =>
         {
             options.OperationFilter<Worklance.Api.Infrastructure.Swagger.FileUploadOperationFilter>();
-            
+
             options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
             {
                 Type = SecuritySchemeType.Http,

@@ -42,5 +42,25 @@ namespace Worklance.Infrastructure.Services.Cloudinary
 
             return uploadResult.SecureUrl.ToString();
         }
+
+        public async Task<string> UploadFileAsync(Stream stream, string fileName, string folder)
+        {
+            if (stream == null || stream.Length == 0)
+                throw new Exception("Invalid file");
+
+            var uploadParams = new RawUploadParams
+            {
+                File = new FileDescription(fileName, stream),
+                Folder = folder,
+                UseFilename = true,
+                UniqueFilename = true,
+                Overwrite = false
+            };
+            var uploadResult = await _cloudinary.UploadAsync(uploadParams);
+            if (uploadResult.Error != null)
+                throw new Exception(uploadResult.Error.Message);
+
+            return uploadResult.SecureUrl.ToString();
+        }
     }
 }
