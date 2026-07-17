@@ -65,26 +65,6 @@ public class JobsController : ControllerBase
             StatusCodes.Status200OK));
     }
 
-    [HttpGet("categories")]
-    public async Task<IActionResult> GetCategories()
-    {
-        var categories = await _jobService.GetAllCategoriesAsync();
-        return Ok(ApiResponse.Success(
-            categories,
-            "Category retrieved successfully",
-            StatusCodes.Status200OK));
-    }
-
-    [HttpGet("categories/{categoryId}/skills")]
-    public async Task<IActionResult> GetSkillsByCategory(int categoryId)
-    {
-        var skills = await _jobService.GetSkillsByCategoryIdAsync(categoryId);
-        return Ok(ApiResponse.Success(
-            skills,
-            "Skills retrieved successfully",
-            StatusCodes.Status200OK));
-    }
-
     [HttpPut("{id}")]
     [Authorize]
     public async Task<IActionResult> UpdateJob(int id, [FromForm] UpdateJobRequest request)

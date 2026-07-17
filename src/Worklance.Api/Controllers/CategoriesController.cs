@@ -20,7 +20,7 @@ namespace Worklance.Api.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "Admin,2")]
+        [Authorize(Roles = "2")]
         public async Task<IActionResult> CreateCategory([FromBody] CreateCategoryRequest request)
         {
             var result = await _adminService.CreateCategoryAsync(request);
@@ -34,7 +34,7 @@ namespace Worklance.Api.Controllers
         }
 
         [HttpPut("{id}")]
-        [Authorize(Roles = "Admin,2")]
+        [Authorize(Roles = "2")]
         public async Task<IActionResult> UpdateCategory(int id, [FromBody] UpdateCategoryRequest request)
         {
             var result = await _adminService.UpdateCategoryAsync(id, request);
@@ -45,7 +45,7 @@ namespace Worklance.Api.Controllers
         }
 
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin,2")]
+        [Authorize(Roles = "2")]
         public async Task<IActionResult> DeleteCategory(int id)
         {
             await _adminService.DeleteCategoryAsync(id);
@@ -75,7 +75,7 @@ namespace Worklance.Api.Controllers
         }
 
         [HttpPost("{categoryId}/skills")]
-        [Authorize(Roles = "Admin,2")]
+        [Authorize(Roles = "2")]
         public async Task<IActionResult> AddSkill(int categoryId, [FromBody] CreateSkillRequest request)
         {
             var result = await _adminService.AddSkillAsync(categoryId, request);

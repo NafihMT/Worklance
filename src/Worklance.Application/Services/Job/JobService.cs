@@ -1,11 +1,8 @@
 using System.Text.Json;
-using Worklance.Application.DTOs.Category;
 using Worklance.Application.DTOs.Jobs;
 using Worklance.Application.Exceptions;
-using Worklance.Application.Interfaces.CloudinaryInterface;
 using Worklance.Application.Interfaces.Repositories;
 using Worklance.Application.Interfaces.Services;
-using Worklance.Domain.Entities;
 using Worklance.Domain.Entities.Job;
 using Worklance.Domain.Enums.Job;
 
@@ -229,8 +226,8 @@ public class JobService : IJobService
     public async Task ReopenJobAsync(int jobId, string userId)
     {
         var job = await GetOwnedJobAsync(jobId, userId);
-        if (job.Status != JobStatus.Closed)
-            throw new BadRequestException("Only Closed jobs can reopen");
+        if (job.Status != JobStatus.Closed && job.Status != JobStatus.Cancelled)
+            throw new BadRequestException("Only Closed or Cancelled jobs can be reopened");
 
         job.Status = JobStatus.Open;
         job.LastModifiedAt = DateTime.UtcNow;

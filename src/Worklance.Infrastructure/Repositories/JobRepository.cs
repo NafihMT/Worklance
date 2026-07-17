@@ -65,7 +65,7 @@ public class JobRepository : GenericRepository<Job>, IJobRepository
     {
         return await _context.Skills
             .AsNoTracking()
-            .Where(s => s.CategoryId == categoryId)
+            .Where(s => s.Categories.Any(c => c.Id == categoryId))
             .OrderBy(c => c.Name)
             .ToListAsync();
     }
@@ -74,7 +74,7 @@ public class JobRepository : GenericRepository<Job>, IJobRepository
     {
         return await _context.Skills
             .AsNoTracking()
-            .Where(s => skillIds.Contains(s.Id) && s.CategoryId == categoryId)
+            .Where(s => skillIds.Contains(s.Id) && s.Categories.Any(c => c.Id == categoryId))
             .Select(s => s.Id)
             .ToListAsync();
     }

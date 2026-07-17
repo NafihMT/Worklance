@@ -6,4 +6,5 @@ namespace Worklance.Application.Interfaces.Repositories;
 public interface ISkillRepository : IGenericRepository<Skill>
 {
     Task<Skill?> GetByNameAsync(string name);
+    Task<Skill?> GetByIdWithCategoriesAsync(int id);
 }

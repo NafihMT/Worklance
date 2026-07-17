@@ -22,6 +22,21 @@ namespace Worklance.Infrastructure.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("CategorySkill", b =>
+                {
+                    b.Property<int>("CategoryId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SkillId")
+                        .HasColumnType("int");
+
+                    b.HasKey("CategoryId", "SkillId");
+
+                    b.HasIndex("SkillId");
+
+                    b.ToTable("CategorySkill");
+                });
+
             modelBuilder.Entity("FreelancerSkill", b =>
                 {
                     b.Property<int>("FreelancerProfileId")
@@ -641,9 +656,6 @@ namespace Worklance.Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int?>("CategoryId")
-                        .HasColumnType("int");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -651,12 +663,25 @@ namespace Worklance.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CategoryId");
-
                     b.HasIndex("Name")
                         .IsUnique();
 
                     b.ToTable("Skills", (string)null);
+                });
+
+            modelBuilder.Entity("CategorySkill", b =>
+                {
+                    b.HasOne("Worklance.Domain.Entities.Job.Category", null)
+                        .WithMany()
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Worklance.Domain.Entities.Skill", null)
+                        .WithMany()
+                        .HasForeignKey("SkillId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("FreelancerSkill", b =>
@@ -789,15 +814,6 @@ namespace Worklance.Infrastructure.Migrations
                     b.Navigation("Skill");
                 });
 
-            modelBuilder.Entity("Worklance.Domain.Entities.Skill", b =>
-                {
-                    b.HasOne("Worklance.Domain.Entities.Job.Category", "Category")
-                        .WithMany("Skills")
-                        .HasForeignKey("CategoryId");
-
-                    b.Navigation("Category");
-                });
-
             modelBuilder.Entity("Worklance.Domain.Entities.AuthEntities.User", b =>
                 {
                     b.Navigation("EmailOtps");
@@ -814,11 +830,6 @@ namespace Worklance.Infrastructure.Migrations
                     b.Navigation("Languages");
 
                     b.Navigation("Portfolios");
-                });
-
-            modelBuilder.Entity("Worklance.Domain.Entities.Job.Category", b =>
-                {
-                    b.Navigation("Skills");
                 });
 
             modelBuilder.Entity("Worklance.Domain.Entities.Job.Job", b =>

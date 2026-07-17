@@ -29,6 +29,9 @@ namespace Worklance.Application.Services
 
         public async Task<CategoryResponse> CreateCategoryAsync(CreateCategoryRequest request)
         {
+            if (request == null || string.IsNullOrWhiteSpace(request.Name))
+                throw new BadRequestException("Category name is required.");
+
             if (await _categoryRepository.ExistsByNameAsync(request.Name))
                 throw new BadRequestException("Category already exists.");
 
@@ -47,15 +50,18 @@ namespace Worklance.Application.Services
                     var trimmedSkillName = skillName.Trim();
                     if (string.IsNullOrEmpty(trimmedSkillName)) continue;
 
-                    // Validate duplicate skill name globally
                     var existingSkill = await _skillRepository.GetByNameAsync(trimmedSkillName);
                     if (existingSkill != null)
-                        throw new BadRequestException($"Skill '{trimmedSkillName}' already exists.");
-
-                    category.Skills.Add(new Skill
                     {
-                        Name = trimmedSkillName
-                    });
+                        category.Skills.Add(existingSkill);
+                    }
+                    else
+                    {
+                        category.Skills.Add(new Skill
+                        {
+                            Name = trimmedSkillName
+                        });
+                    }
                 }
             }
 
@@ -67,6 +73,9 @@ namespace Worklance.Application.Services
 
         public async Task<CategoryResponse> UpdateCategoryAsync(int categoryId, UpdateCategoryRequest request)
         {
+            if (request == null || string.IsNullOrWhiteSpace(request.Name))
+                throw new BadRequestException("Category name is required.");
+
             var category = await _categoryRepository.GetByIdWithSkillsAsync(categoryId);
             if (category == null)
                 throw new NotFoundException("Category not found.");
@@ -102,22 +111,32 @@ namespace Worklance.Application.Services
 
         public async Task<CategoryResponse> AddSkillAsync(int categoryId, CreateSkillRequest request)
         {
+            if (request == null || string.IsNullOrWhiteSpace(request.Name))
+                throw new BadRequestException("Skill name is required.");
+
             var category = await _categoryRepository.GetByIdWithSkillsAsync(categoryId);
             if (category == null)
                 throw new NotFoundException("Category not found.");
 
             var trimmedSkillName = request.Name.Trim();
             var existingSkill = await _skillRepository.GetByNameAsync(trimmedSkillName);
+
             if (existingSkill != null)
-                throw new BadRequestException($"Skill '{trimmedSkillName}' already exists.");
-
-            var skill = new Skill
             {
-                Name = trimmedSkillName,
-                CategoryId = categoryId
-            };
+                if (category.Skills.Any(s => s.Id == existingSkill.Id))
+                    throw new BadRequestException($"Skill '{trimmedSkillName}' already belongs to this category.");
 
-            await _skillRepository.AddAsync(skill);
+                category.Skills.Add(existingSkill);
+            }
+            else
+            {
+                category.Skills.Add(new Skill
+                {
+                    Name = trimmedSkillName
+                });
+            }
+
+            _categoryRepository.Update(category);
             await _unitOfWork.SaveChangesAsync();
 
             // Refresh category to include the new skill
@@ -127,7 +146,10 @@ namespace Worklance.Application.Services
 
         public async Task<CategoryResponse> UpdateSkillAsync(int skillId, UpdateSkillRequest request)
         {
-            var skill = await _skillRepository.GetByIdAsync(skillId);
+            if (request == null || string.IsNullOrWhiteSpace(request.Name))
+                throw new BadRequestException("Skill name is required.");
+
+            var skill = await _skillRepository.GetByIdWithCategoriesAsync(skillId);
             if (skill == null)
                 throw new NotFoundException("Skill not found.");
 
@@ -140,9 +162,10 @@ namespace Worklance.Application.Services
             _skillRepository.Update(skill);
             await _unitOfWork.SaveChangesAsync();
 
-            if (skill.CategoryId.HasValue)
+            var firstCategory = skill.Categories.FirstOrDefault();
+            if (firstCategory != null)
             {
-                var category = await _categoryRepository.GetByIdWithSkillsAsync(skill.CategoryId.Value);
+                var category = await _categoryRepository.GetByIdWithSkillsAsync(firstCategory.Id);
                 if (category != null)
                 {
                     return MapToResponse(category);
