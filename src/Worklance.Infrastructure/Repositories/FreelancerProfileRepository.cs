@@ -33,7 +33,7 @@ public class FreelancerProfileRepository : GenericRepository<FreelancerProfile>,
             .Include(fp => fp.Languages)
             .FirstOrDefaultAsync(fp => fp.Id == id);
     }
-
+    //test
     public async Task<bool> HasProfileAsync(string userId)
     {
         return await _context.FreelancerProfiles
