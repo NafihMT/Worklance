@@ -22,6 +22,21 @@ namespace Worklance.Infrastructure.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("CategorySkill", b =>
+                {
+                    b.Property<int>("CategoryId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SkillId")
+                        .HasColumnType("int");
+
+                    b.HasKey("CategoryId", "SkillId");
+
+                    b.HasIndex("SkillId");
+
+                    b.ToTable("CategorySkill");
+                });
+
             modelBuilder.Entity("FreelancerSkill", b =>
                 {
                     b.Property<int>("FreelancerProfileId")
@@ -508,7 +523,22 @@ namespace Worklance.Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime>("LastModifiedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("LastModifiedBy")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Name")
@@ -522,14 +552,14 @@ namespace Worklance.Infrastructure.Migrations
 
             modelBuilder.Entity("Worklance.Domain.Entities.Job.Job", b =>
                 {
-                    b.Property<int>("JobId")
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("JobId"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("AttachmentUrl")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<byte[]>("AttachmentBytes")
+                        .HasColumnType("varbinary(max)");
 
                     b.Property<int>("CategoryId")
                         .HasColumnType("int");
@@ -539,6 +569,9 @@ namespace Worklance.Infrastructure.Migrations
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("Deadline")
                         .HasColumnType("datetime2");
@@ -562,6 +595,12 @@ namespace Worklance.Infrastructure.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
+                    b.Property<DateTime>("LastModifiedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<decimal?>("MaxHourlyRate")
                         .HasColumnType("decimal(18,2)");
 
@@ -573,7 +612,7 @@ namespace Worklance.Infrastructure.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
-                    b.Property<string>("TagsJson")
+                    b.Property<string>("Tags")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("Tags");
@@ -583,10 +622,7 @@ namespace Worklance.Infrastructure.Migrations
                         .HasMaxLength(150)
                         .HasColumnType("nvarchar(150)");
 
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("JobId");
+                    b.HasKey("Id");
 
                     b.HasIndex("CategoryId");
 
@@ -631,6 +667,21 @@ namespace Worklance.Infrastructure.Migrations
                         .IsUnique();
 
                     b.ToTable("Skills", (string)null);
+                });
+
+            modelBuilder.Entity("CategorySkill", b =>
+                {
+                    b.HasOne("Worklance.Domain.Entities.Job.Category", null)
+                        .WithMany()
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Worklance.Domain.Entities.Skill", null)
+                        .WithMany()
+                        .HasForeignKey("SkillId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("FreelancerSkill", b =>

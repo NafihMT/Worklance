@@ -36,13 +36,13 @@ public static class DependencyInjection
         services.AddScoped<IAdminUserVerificationQuery, AdminUserVerificationQuery>();
 
         // --- Missing Auth Services from the merge conflict ---
-        services.Configure<Worklance.Application.Common.Settings.CloudinarySettings>(configuration.GetSection("CloudinarySettings"));
+        // services.Configure<Worklance.Application.Common.Settings.CloudinarySettings>(configuration.GetSection("CloudinarySettings"));
         services.Configure<Worklance.Application.Common.Settings.EmailSettings>(configuration.GetSection("EmailSettings"));
         services.Configure<Worklance.Infrastructure.Settings.JwtSettings>(configuration.GetSection("JwtSettings"));
 
         services.AddScoped<Worklance.Application.Interfaces.AuthInterface.IAuthRepository, Worklance.Infrastructure.Data.Repositories.AuthRepo.AuthRepository>();
         services.AddScoped<Worklance.Application.Interfaces.AuthInterface.IAuthService, Worklance.Infrastructure.Services.AuthServices.AuthService>();
-        services.AddScoped<Worklance.Application.Interfaces.CloudinaryInterface.ICloudinaryService, Worklance.Infrastructure.Services.Cloudinary.CloudinaryService>();
+        // services.AddScoped<Worklance.Application.Interfaces.CloudinaryInterface.ICloudinaryService, Worklance.Infrastructure.Services.Cloudinary.CloudinaryService>();
         services.AddScoped<Worklance.Application.Interfaces.EmailInterface.IEmailService, Worklance.Infrastructure.Services.Email.EmailService>();
         services.AddScoped<Worklance.Application.Interfaces.AuthInterface.IJwtService, Worklance.Infrastructure.Services.JWT.JwtService>();
         services.AddScoped<Worklance.Application.Interfaces.AuthInterface.IOcrService, Worklance.Infrastructure.Services.OCR.OcrService>();
@@ -51,6 +51,7 @@ public static class DependencyInjection
 
         // Job Module Repositories
         services.AddScoped<IJobRepository, JobRepository>();
+        services.AddScoped<ICategoryRepository, CategoryRepository>();
 
         return services;
     }

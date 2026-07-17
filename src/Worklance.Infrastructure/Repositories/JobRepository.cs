@@ -1,9 +1,8 @@
 using Microsoft.EntityFrameworkCore;
-using Worklance.Application.Interfaces;
 using Worklance.Application.Interfaces.Repositories;
 using Worklance.Domain.Entities;
 using Worklance.Domain.Entities.Job;
-using Worklance.Infrastructure.Persistence;
+using Worklance.Domain.Enums.Job;
 using Worklance.Infrastructure.Data;
 
 namespace Worklance.Infrastructure.Repositories;
@@ -16,17 +15,29 @@ public class JobRepository : GenericRepository<Job>, IJobRepository
 
     public async Task<Job?> GetJobWithDetailsAsync(int jobId)
     {
+
+        if (jobId <= 0)
+            return null;
+
         return await _context.Jobs
+            .AsNoTracking()
+            .AsSplitQuery()
+            .Where(x => x.Id == jobId && !x.IsDeleted)
+
             .Include(j => j.ClientProfile)
             .Include(j => j.Category)
             .Include(j => j.JobSkills)
                 .ThenInclude(js => js.Skill)
-            .FirstOrDefaultAsync(j => j.JobId == jobId);
+            .FirstOrDefaultAsync();
     }
 
     public async Task<IReadOnlyList<Job>> GetAllJobsWithDetailsAsync()
     {
         return await _context.Jobs
+            .AsNoTracking()
+            .Where(j => !j.IsDeleted)
+
+            .AsSplitQuery()
             .Include(j => j.ClientProfile)
             .Include(j => j.Category)
             .Include(j => j.JobSkills)
@@ -37,22 +48,86 @@ public class JobRepository : GenericRepository<Job>, IJobRepository
 
     public async Task<bool> CategoryExistsAsync(int categoryId)
     {
-        return await _context.Categories.AnyAsync(c => c.Id == categoryId);
+        return await _context.Categories.AnyAsync(c => c.Id == categoryId && !c.IsDeleted);
     }
 
-    public async Task<List<int>> GetExistingSkillIdsAsync(List<int> skillIds)
+    public async Task<IReadOnlyList<Category>> GetAllCategoriesAsync()
+    {
+        return await _context.Categories
+            .AsNoTracking()
+            .Where(c => !c.IsDeleted)
+            .Include(c => c.Skills)
+            .OrderBy(c => c.Name)
+            .ToListAsync();
+    }
+
+    public async Task<IReadOnlyList<Skill>> GetSkillsByCategoryIdAsync(int categoryId)
     {
         return await _context.Skills
-            .Where(s => skillIds.Contains(s.Id))
+            .AsNoTracking()
+            .Where(s => s.Categories.Any(c => c.Id == categoryId))
+            .OrderBy(c => c.Name)
+            .ToListAsync();
+    }
+
+    public async Task<IReadOnlyList<int>> GetExistingSkillIdsAsync(List<int> skillIds, int categoryId)
+    {
+        return await _context.Skills
+            .AsNoTracking()
+            .Where(s => skillIds.Contains(s.Id) && s.Categories.Any(c => c.Id == categoryId))
             .Select(s => s.Id)
             .ToListAsync();
     }
 
     public async Task<int> GetClientProfileIdByUserIdAsync(string userId)
     {
-        var profile = await _context.FreelancerProfiles
-            .FirstOrDefaultAsync(cp => cp.UserId == userId);
+        return await _context.FreelancerProfiles
+            .AsNoTracking()
+            .Where(cp => cp.UserId == userId)
+            .Select(cp => cp.Id)
+            .FirstOrDefaultAsync();
+    }
 
-        return profile?.Id ?? 0;
+    public async Task<Job?> GetJobForUpdateAsync(int jobId, string userId)
+    {
+        return await _context.Jobs
+            .Include(j => j.JobSkills)
+            .Include(j => j.ClientProfile)
+            .FirstOrDefaultAsync(j =>
+                j.Id == jobId &&
+                !j.IsDeleted &&
+                j.ClientProfile.UserId == userId);
+    }
+
+
+    public async Task<IReadOnlyList<Job>> GetJobsByClientProfileIdAsync(int clientProfileId, JobStatus? status)
+    {
+        // Filtering by Status
+        var query = _context.Jobs
+            .AsNoTracking()
+            .AsSplitQuery()
+            .Where(j => j.ClientProfileId == clientProfileId && !j.IsDeleted);
+
+        if (status.HasValue)
+        {
+            query = query.Where(j => j.Status == status.Value);
+        }
+
+        return await query
+            .Include(j => j.ClientProfile)
+            .Include(j => j.Category)
+            .Include(j => j.JobSkills)
+                .ThenInclude(js => js.Skill)
+            .OrderByDescending(j => j.CreatedAt)
+            .ToListAsync();
+    }
+
+    public async Task<bool> CategoryNameExistsAsync(string categoryName)
+    {
+        return await _context.Categories
+            .AsNoTracking()
+            .AnyAsync(c =>
+                c.Name.ToLower() == categoryName.Trim().ToLower()
+                && !c.IsDeleted);
     }
 }

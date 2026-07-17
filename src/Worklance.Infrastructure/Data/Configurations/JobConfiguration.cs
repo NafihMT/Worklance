@@ -11,7 +11,7 @@ public class JobConfiguration : IEntityTypeConfiguration<Job>
     {
         builder.ToTable("Jobs");
 
-        builder.HasKey(j => j.JobId);
+        builder.HasKey(j => j.Id);
 
         builder.Property(j => j.Title)
             .IsRequired()
@@ -30,7 +30,7 @@ public class JobConfiguration : IEntityTypeConfiguration<Job>
         builder.Property(j => j.MaxHourlyRate)
             .HasColumnType("decimal(18,2)");
 
-        builder.Property(j => j.TagsJson)
+        builder.Property(j => j.Tags)
             .HasColumnName("Tags")
             .HasColumnType("nvarchar(max)");
 
@@ -53,7 +53,7 @@ public class JobConfiguration : IEntityTypeConfiguration<Job>
             .OnDelete(DeleteBehavior.Restrict);
 
         // Soft delete query filter
-        builder.HasQueryFilter(j => !j.IsDeleted);
+        builder.HasQueryFilter(j => !j.IsDeleted);  // No Soft delete in Global Filter 
 
         builder.HasIndex(j => j.Status);
         builder.HasIndex(j => j.ClientProfileId);

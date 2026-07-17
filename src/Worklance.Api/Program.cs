@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Worklance.Infrastructure.Settings;
+using Worklance.Application.Common.ApiResponse;
 
 namespace Worklance.API;
 
@@ -57,6 +58,26 @@ public class Program
                 {
                     Console.WriteLine("OnAuthenticationFailed: " + context.Exception.Message);
                     return Task.CompletedTask;
+                },
+                OnChallenge = async context =>
+                {
+                    if (context.Response.HasStarted)
+                        return;
+                    context.HandleResponse();
+
+                    context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                    context.Response.ContentType = "application/json";
+
+                    var message = "Please Login";
+                    if (context.AuthenticateFailure is SecurityTokenExpiredException)
+                    {
+                        message = "Session expired. Please login again.";
+                    }
+
+                    await context.Response.WriteAsJsonAsync(
+                        ApiResponse.Failure(
+                            message,
+                            StatusCodes.Status401Unauthorized));
                 },
                 OnTokenValidated = context =>
                 {

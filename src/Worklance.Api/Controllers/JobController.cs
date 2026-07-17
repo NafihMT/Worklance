@@ -1,10 +1,10 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
+using Worklance.Application.Common.ApiResponse;
 using Worklance.Application.DTOs.Jobs;
-using Worklance.Application.Exceptions;
 using Worklance.Application.Interfaces.Services;
+using Worklance.Domain.Enums.Job;
 
 namespace Worklance.API.Controllers;
 
@@ -20,50 +20,166 @@ public class JobsController : ControllerBase
     }
 
     [HttpPost]
-    [Authorize(Roles = "1")]
-    public async Task<IActionResult> CreateJob([FromBody] CreateJobRequest request)
+    [Authorize]
+    public async Task<IActionResult> CreateJob([FromForm] CreateJobRequest request)
     {
 
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        
-        if (string.IsNullOrEmpty(userId))
-            return Unauthorized();
 
-        try
-        {
-            var result = await _jobService.CreateJobAsync(userId, request);
-            return CreatedAtAction(nameof(CreateJob), new { id = result.JobId }, result);
-        }
-        catch (ValidationException ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
-        catch (NotFoundException ex)
-        {
-            return NotFound(new { message = ex.Message });
-        }
+        if (string.IsNullOrEmpty(userId))
+            return Unauthorized(ApiResponse.Failure(
+                "Unauthorized access",
+                StatusCodes.Status401Unauthorized));
+
+        var result = await _jobService.CreateJobAsync(userId, request);
+        return CreatedAtAction(
+            nameof(GetJobById),
+            new { id = result.JobId },
+            ApiResponse.Success(
+                result,
+                "Job created successfully",
+                StatusCodes.Status201Created));
+
     }
 
     [HttpGet]
-    [Authorize] 
+    [Authorize]
     public async Task<IActionResult> GetJobs()
     {
         var jobs = await _jobService.GetAllJobsAsync();
-        return Ok(jobs);
+        return Ok(ApiResponse.Success(
+            jobs,
+            "Job retrieved successfully.",
+            StatusCodes.Status200OK));
+
     }
 
     [HttpGet("{id}")]
     [Authorize]
     public async Task<IActionResult> GetJobById(int id)
     {
-        try
+        var job = await _jobService.GetJobByIdAsync(id);
+        return Ok(ApiResponse.Success(
+            job,
+            "Job retrieved successfully",
+            StatusCodes.Status200OK));
+    }
+
+    [HttpPut("{id}")]
+    [Authorize]
+    public async Task<IActionResult> UpdateJob(int id, [FromForm] UpdateJobRequest request)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userId))
+            return Unauthorized(
+             ApiResponse.Failure(
+                 "Unauthorized access",
+                 StatusCodes.Status401Unauthorized));
+
+        var result = await _jobService.UpdateJobAsync(id, userId, request);
+
+        return Ok(ApiResponse.Success(
+            result,
+            "Job updated successfully",
+            StatusCodes.Status200OK));
+    }
+
+    [HttpDelete("{id}")]
+    [Authorize]
+    public async Task<IActionResult> DeleteJob(int id)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userId))
+            return Unauthorized(
+             ApiResponse.Failure(
+                 "Unauthorized access",
+                 StatusCodes.Status401Unauthorized));
+
+        await _jobService.SoftDeleteJobAsync(id, userId);
+
+        return Ok(ApiResponse.Success(
+            "Job deleted successfully",
+            StatusCodes.Status200OK));
+
+    }
+
+    [HttpPatch("{id}/close")]
+    [Authorize]
+    public async Task<IActionResult> CloseJob(int id)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(userId))
         {
-            var job = await _jobService.GetJobByIdAsync(id);
-            return Ok(job);
+            return Unauthorized(
+                ApiResponse.Failure(
+                    "Unauthorized access",
+                    StatusCodes.Status401Unauthorized));
         }
-        catch (NotFoundException ex)
+
+        await _jobService.CloseJobAsync(id, userId);
+
+        return Ok(ApiResponse.Success(
+            "Job closed successfully",
+            StatusCodes.Status200OK));
+    }
+
+    [HttpPatch("{id}/reopen")]
+    [Authorize]
+    public async Task<IActionResult> ReopenJob(int id)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(userId))
         {
-            return NotFound(new { message = ex.Message });
+            return Unauthorized(
+                ApiResponse.Failure(
+                    "Unauthorized access",
+                    StatusCodes.Status401Unauthorized));
         }
+
+        await _jobService.ReopenJobAsync(id, userId);
+
+        return Ok(ApiResponse.Success(
+            "Job reopened successfully",
+            StatusCodes.Status200OK));
+    }
+
+    [HttpPatch("{id}/cancel")]
+    [Authorize]
+    public async Task<IActionResult> CancelJob(int id)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            return Unauthorized(
+                ApiResponse.Failure(
+                    "Unauthorized access",
+                    StatusCodes.Status401Unauthorized));
+        }
+
+        await _jobService.CancelJobAsync(id, userId);
+
+        return Ok(ApiResponse.Success(
+            "Job cancelled successfully.",
+            StatusCodes.Status200OK));
+    }
+
+    [HttpGet("my-jobs")]
+    [Authorize]
+    public async Task<IActionResult> GetMyPostedJobs([FromQuery] JobStatus? status)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(userId))
+            return Unauthorized(
+                ApiResponse.Failure(
+                    "Unauthorized access",
+                    StatusCodes.Status401Unauthorized));
+
+        var jobs = await _jobService.GetMyPostedJobsAsync(userId, status);
+
+        return Ok(ApiResponse.Success(
+            jobs,
+            "Jobs retrieved successfully",
+            StatusCodes.Status200OK));
+
     }
 }

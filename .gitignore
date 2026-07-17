@@ -428,6 +428,6 @@ FodyWeavers.xsd
 *.msm
 *.msp
 
-
-
-# **/Migrations/
+src/Worklance.Api/appsettings.Development.json
+**/appsettings.Development.json
+**/Migrations/
