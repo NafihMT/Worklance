@@ -8,8 +8,7 @@ public class CreateFreelancerProfileDto
 {
     public string FirstName { get; set; } = string.Empty;
     public string LastName { get; set; } = string.Empty;
-    public string Username { get; set; } = string.Empty;
-    public string Email { get; set; } = string.Empty;
+    public string? Username { get; set; }
     public string? PhoneNumber { get; set; }
     public DateTime? DateOfBirth { get; set; }
     public Gender? Gender { get; set; }
@@ -21,10 +20,10 @@ public class CreateFreelancerProfileDto
     public string? Address { get; set; }
 
     // Professional Details
-    public string ProfessionalTitle { get; set; } = string.Empty;
-    public string AboutMe { get; set; } = string.Empty;
-    public string PrimaryTechnologyStack { get; set; } = string.Empty;
-    public string Specialization { get; set; } = string.Empty;
+    public string? ProfessionalTitle { get; set; }
+    public string? AboutMe { get; set; }
+    public string? PrimaryTechnologyStack { get; set; }
+    public string? Specialization { get; set; }
     public bool IsExperienced { get; set; }
     public int? ExperienceYears { get; set; }
     public int? ExperienceMonths { get; set; }

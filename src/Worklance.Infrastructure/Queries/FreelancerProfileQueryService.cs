@@ -27,9 +27,74 @@ public class FreelancerProfileQueryService : IFreelancerProfileQueryService
         const string getProfileIdQuery = "SELECT Id FROM FreelancerProfiles WHERE UserId = @UserId";
         var profileId = await connection.QueryFirstOrDefaultAsync<int?>(getProfileIdQuery, new { UserId = userId });
 
-        if (profileId == null) return null;
+        // Fetch User basic info from the Users table
+        const string getUserQuery = "SELECT Id, FullName, Email, PhoneNumber FROM Users WHERE Id = @UserId";
+        var user = await connection.QueryFirstOrDefaultAsync<dynamic>(getUserQuery, new { UserId = userId });
 
-        return await GetProfileByIdAsync(profileId.Value);
+        if (user == null)
+        {
+            return null;
+        }
+
+        if (profileId != null)
+        {
+            var profile = await GetProfileByIdAsync(profileId.Value);
+            if (profile != null)
+            {
+                profile.Email = user.Email ?? string.Empty;
+                if (string.IsNullOrEmpty(profile.PhoneNumber))
+                {
+                    profile.PhoneNumber = user.PhoneNumber;
+                }
+                profile.CalculateCompletion();
+                return profile;
+            }
+        }
+
+        string fullName = user.FullName ?? string.Empty;
+        var nameParts = fullName.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+        var fName = nameParts.Length > 0 ? nameParts[0] : string.Empty;
+        var lName = nameParts.Length > 1 ? string.Join(" ", nameParts.Skip(1)) : string.Empty;
+
+        var defaultProfile = new FreelancerProfileDto
+        {
+            Id = 0,
+            UserId = userId,
+            FirstName = fName,
+            LastName = lName,
+            Username = string.Empty,
+            Email = user.Email ?? string.Empty,
+            PhoneNumber = user.PhoneNumber,
+            DateOfBirth = null,
+            Gender = null,
+            ProfilePhotoUrl = null,
+            Country = null,
+            State = null,
+            City = null,
+            Address = null,
+            ProfessionalTitle = string.Empty,
+            AboutMe = string.Empty,
+            PrimaryTechnologyStack = string.Empty,
+            Specialization = string.Empty,
+            IsExperienced = false,
+            ExperienceYears = null,
+            ExperienceMonths = null,
+            Availability = default,
+            WorkPreference = default,
+            HourlyRate = null,
+            ResumeUrl = null,
+            GitHubUrl = null,
+            LinkedInUrl = null,
+            PortfolioWebsiteUrl = null,
+            TwitterUrl = null,
+            Skills = new List<SkillDto>(),
+            Educations = new List<FreelancerEducationDto>(),
+            Certifications = new List<FreelancerCertificationDto>(),
+            Portfolios = new List<FreelancerPortfolioDto>(),
+            Languages = new List<FreelancerLanguageDto>()
+        };
+        defaultProfile.CalculateCompletion();
+        return defaultProfile;
     }
 
     public async Task<FreelancerProfileDto?> GetProfileByIdAsync(int id)
@@ -56,6 +121,11 @@ public class FreelancerProfileQueryService : IFreelancerProfileQueryService
         profile.Portfolios = (await multi.ReadAsync<FreelancerPortfolioDto>()).ToList();
         profile.Languages = (await multi.ReadAsync<FreelancerLanguageDto>()).ToList();
 
+        const string userEmailQuery = "SELECT Email FROM Users WHERE Id = @UserId";
+        var userEmail = await connection.QueryFirstOrDefaultAsync<string>(userEmailQuery, new { UserId = profile.UserId });
+        profile.Email = userEmail ?? string.Empty;
+
+        profile.CalculateCompletion();
         return profile;
     }
 
@@ -109,6 +179,11 @@ public class FreelancerProfileQueryService : IFreelancerProfileQueryService
                 WHERE fs.FreelancerProfileId = @ProfileId";
             var skills = await connection.QueryAsync<SkillDto>(skillQuery, new { ProfileId = profile.Id });
             profile.Skills = skills.ToList();
+            const string userEmailQuery = "SELECT Email FROM Users WHERE Id = @UserId";
+            var userEmail = await connection.QueryFirstOrDefaultAsync<string>(userEmailQuery, new { UserId = profile.UserId });
+            profile.Email = userEmail ?? string.Empty;
+
+            profile.CalculateCompletion();
         }
 
         return profileList;
@@ -120,5 +195,92 @@ public class FreelancerProfileQueryService : IFreelancerProfileQueryService
         const string query = "SELECT * FROM Skills ORDER BY Name";
         var skills = await connection.QueryAsync<SkillDto>(query);
         return skills.ToList();
+    }
+
+    private void PopulateCompletionDetails(FreelancerProfileDto dto)
+    {
+        var missing = new List<string>();
+        int pct = 0;
+
+        // 1. Basic Info (20%): Email, PhoneNumber, Country, City, Address
+        if (!string.IsNullOrEmpty(dto.Email) &&
+            !string.IsNullOrEmpty(dto.PhoneNumber) &&
+            !string.IsNullOrEmpty(dto.Country) &&
+            !string.IsNullOrEmpty(dto.City) &&
+            !string.IsNullOrEmpty(dto.Address))
+        {
+            pct += 20;
+        }
+        else
+        {
+            missing.Add("Basic Info");
+        }
+
+        // 2. Professional Info (20%): ProfessionalTitle, AboutMe, PrimaryTechnologyStack, Specialization, HourlyRate
+        if (!string.IsNullOrEmpty(dto.ProfessionalTitle) &&
+            !string.IsNullOrEmpty(dto.AboutMe) &&
+            !string.IsNullOrEmpty(dto.PrimaryTechnologyStack) &&
+            !string.IsNullOrEmpty(dto.Specialization) &&
+            dto.HourlyRate.HasValue)
+        {
+            pct += 20;
+        }
+        else
+        {
+            missing.Add("Professional Info");
+        }
+
+        // 3. Skills (15%)
+        if (dto.Skills != null && dto.Skills.Any())
+        {
+            pct += 15;
+        }
+        else
+        {
+            missing.Add("Skills");
+        }
+
+        // 4. Education (15%)
+        if (dto.Educations != null && dto.Educations.Any())
+        {
+            pct += 15;
+        }
+        else
+        {
+            missing.Add("Education");
+        }
+
+        // 5. Experience (10%)
+        if (!dto.IsExperienced || (dto.IsExperienced && (dto.ExperienceYears.GetValueOrDefault() > 0 || dto.ExperienceMonths.GetValueOrDefault() > 0)))
+        {
+            pct += 10;
+        }
+        else
+        {
+            missing.Add("Experience");
+        }
+
+        // 6. Portfolio (10%)
+        if (dto.Portfolios != null && dto.Portfolios.Any())
+        {
+            pct += 10;
+        }
+        else
+        {
+            missing.Add("Portfolio");
+        }
+
+        // 7. Resume (10%)
+        if (!string.IsNullOrEmpty(dto.ResumeUrl))
+        {
+            pct += 10;
+        }
+        else
+        {
+            missing.Add("Resume");
+        }
+
+        dto.ProfileCompletionPercentage = pct;
+        dto.MissingSections = missing;
     }
 }

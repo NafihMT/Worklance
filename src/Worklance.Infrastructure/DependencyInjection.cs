@@ -42,7 +42,6 @@ public static class DependencyInjection
 
         services.AddScoped<Worklance.Application.Interfaces.AuthInterface.IAuthRepository, Worklance.Infrastructure.Data.Repositories.AuthRepo.AuthRepository>();
         services.AddScoped<Worklance.Application.Interfaces.AuthInterface.IAuthService, Worklance.Infrastructure.Services.AuthServices.AuthService>();
-        services.AddScoped<Worklance.Application.Interfaces.CloudinaryInterface.ICloudinaryService, Worklance.Infrastructure.Services.Cloudinary.CloudinaryService>();
         services.AddScoped<Worklance.Application.Interfaces.EmailInterface.IEmailService, Worklance.Infrastructure.Services.Email.EmailService>();
         services.AddScoped<Worklance.Application.Interfaces.AuthInterface.IJwtService, Worklance.Infrastructure.Services.JWT.JwtService>();
         services.AddScoped<Worklance.Application.Interfaces.AuthInterface.IOcrService, Worklance.Infrastructure.Services.OCR.OcrService>();

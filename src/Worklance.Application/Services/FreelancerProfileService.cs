@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Worklance.Application.DTOs.FreelancerProfiles;
+using Worklance.Application.Interfaces.AuthInterface;
 using Worklance.Application.Interfaces.Repositories;
 using Worklance.Application.Interfaces.Services;
 using Worklance.Domain.Entities;
@@ -19,19 +20,22 @@ public class FreelancerProfileService : IFreelancerProfileService
     private readonly IUnitOfWork _unitOfWork;
     private readonly IFileStorageService _fileStorageService;
     private readonly IMapper _mapper;
+    private readonly IAuthRepository _authRepository;
 
     public FreelancerProfileService(
         IFreelancerProfileRepository profileRepository,
         ISkillRepository skillRepository,
         IUnitOfWork unitOfWork,
         IFileStorageService fileStorageService,
-        IMapper mapper)
+        IMapper mapper,
+        IAuthRepository authRepository)
     {
         _profileRepository = profileRepository;
         _skillRepository = skillRepository;
         _unitOfWork = unitOfWork;
         _fileStorageService = fileStorageService;
         _mapper = mapper;
+        _authRepository = authRepository;
     }
 
     public async Task<FreelancerProfileDto> CreateProfileAsync(string userId, CreateFreelancerProfileDto dto)
@@ -51,13 +55,17 @@ public class FreelancerProfileService : IFreelancerProfileService
         ValidateExperience(dto.IsExperienced, dto.ExperienceYears, dto.ExperienceMonths);
         ValidateSocialLinks(dto.GitHubUrl, dto.LinkedInUrl, dto.PortfolioWebsiteUrl, dto.TwitterUrl);
 
+        int parsedUserId = int.Parse(userId);
+        var user = await _authRepository.GetUserByIdAsync(parsedUserId);
+        string userEmail = user?.Email ?? string.Empty;
+
         var profile = new FreelancerProfile
         {
             UserId = userId,
             FirstName = dto.FirstName,
             LastName = dto.LastName,
-            Username = dto.Username,
-            Email = dto.Email,
+            Username = dto.Username ?? string.Empty,
+            Email = userEmail,
             PhoneNumber = dto.PhoneNumber,
             DateOfBirth = dto.DateOfBirth,
             Gender = dto.Gender,
@@ -65,10 +73,10 @@ public class FreelancerProfileService : IFreelancerProfileService
             State = dto.State,
             City = dto.City,
             Address = dto.Address,
-            ProfessionalTitle = dto.ProfessionalTitle,
-            AboutMe = dto.AboutMe,
-            PrimaryTechnologyStack = dto.PrimaryTechnologyStack,
-            Specialization = dto.Specialization,
+            ProfessionalTitle = dto.ProfessionalTitle ?? string.Empty,
+            AboutMe = dto.AboutMe ?? string.Empty,
+            PrimaryTechnologyStack = dto.PrimaryTechnologyStack ?? string.Empty,
+            Specialization = dto.Specialization ?? string.Empty,
             IsExperienced = dto.IsExperienced,
             ExperienceYears = dto.IsExperienced ? dto.ExperienceYears : null,
             ExperienceMonths = dto.IsExperienced ? dto.ExperienceMonths : null,
@@ -127,7 +135,10 @@ public class FreelancerProfileService : IFreelancerProfileService
         await _profileRepository.AddAsync(profile);
         await _unitOfWork.SaveChangesAsync();
 
-        return _mapper.Map<FreelancerProfileDto>(profile);
+        var result = _mapper.Map<FreelancerProfileDto>(profile);
+        result.Email = userEmail;
+        result.CalculateCompletion();
+        return result;
     }
 
     public async Task<FreelancerProfileDto> UpdateProfileAsync(string userId, UpdateFreelancerProfileDto dto)
@@ -142,10 +153,13 @@ public class FreelancerProfileService : IFreelancerProfileService
         ValidateExperience(dto.IsExperienced, dto.ExperienceYears, dto.ExperienceMonths);
         ValidateSocialLinks(dto.GitHubUrl, dto.LinkedInUrl, dto.PortfolioWebsiteUrl, dto.TwitterUrl);
 
+        int parsedUserId = int.Parse(userId);
+        var user = await _authRepository.GetUserByIdAsync(parsedUserId);
+        string userEmail = user?.Email ?? string.Empty;
+
         profile.FirstName = dto.FirstName;
         profile.LastName = dto.LastName;
-        profile.Username = dto.Username;
-        profile.Email = dto.Email;
+        profile.Username = dto.Username ?? string.Empty;
         profile.PhoneNumber = dto.PhoneNumber;
         profile.DateOfBirth = dto.DateOfBirth;
         profile.Gender = dto.Gender;
@@ -153,10 +167,10 @@ public class FreelancerProfileService : IFreelancerProfileService
         profile.State = dto.State;
         profile.City = dto.City;
         profile.Address = dto.Address;
-        profile.ProfessionalTitle = dto.ProfessionalTitle;
-        profile.AboutMe = dto.AboutMe;
-        profile.PrimaryTechnologyStack = dto.PrimaryTechnologyStack;
-        profile.Specialization = dto.Specialization;
+        profile.ProfessionalTitle = dto.ProfessionalTitle ?? string.Empty;
+        profile.AboutMe = dto.AboutMe ?? string.Empty;
+        profile.PrimaryTechnologyStack = dto.PrimaryTechnologyStack ?? string.Empty;
+        profile.Specialization = dto.Specialization ?? string.Empty;
         profile.IsExperienced = dto.IsExperienced;
         profile.ExperienceYears = dto.IsExperienced ? dto.ExperienceYears : null;
         profile.ExperienceMonths = dto.IsExperienced ? dto.ExperienceMonths : null;
@@ -218,36 +232,40 @@ public class FreelancerProfileService : IFreelancerProfileService
         _profileRepository.Update(profile);
         await _unitOfWork.SaveChangesAsync();
 
-        return _mapper.Map<FreelancerProfileDto>(profile);
+        var result = _mapper.Map<FreelancerProfileDto>(profile);
+        result.Email = userEmail;
+        result.CalculateCompletion();
+        return result;
     }
 
     public async Task<FreelancerProfileDto?> GetProfileByUserIdAsync(string userId)
     {
         var profile = await _profileRepository.GetProfileWithDetailsAsync(userId);
-        return profile == null ? null : _mapper.Map<FreelancerProfileDto>(profile);
+        if (profile == null) return null;
+        var dto = _mapper.Map<FreelancerProfileDto>(profile);
+        
+        int parsedUserId = int.Parse(userId);
+        var user = await _authRepository.GetUserByIdAsync(parsedUserId);
+        dto.Email = user?.Email ?? string.Empty;
+
+        dto.CalculateCompletion();
+        return dto;
     }
 
     public async Task<FreelancerProfileDto?> GetProfileByIdAsync(int id)
     {
         var profile = await _profileRepository.GetProfileWithDetailsByIdAsync(id);
-        return profile == null ? null : _mapper.Map<FreelancerProfileDto>(profile);
-    }
-
-    public async Task DeleteProfileAsync(string userId)
-    {
-        var profile = await _profileRepository.GetProfileWithDetailsAsync(userId);
-        if (profile == null)
+        if (profile == null) return null;
+        var dto = _mapper.Map<FreelancerProfileDto>(profile);
+        
+        if (int.TryParse(dto.UserId, out var parsedUserId))
         {
-            throw new KeyNotFoundException("Profile not found.");
+            var user = await _authRepository.GetUserByIdAsync(parsedUserId);
+            dto.Email = user?.Email ?? string.Empty;
         }
 
-        if (!string.IsNullOrEmpty(profile.ResumeUrl))
-        {
-            _fileStorageService.DeleteFile(profile.ResumeUrl);
-        }
-
-        _profileRepository.Delete(profile);
-        await _unitOfWork.SaveChangesAsync();
+        dto.CalculateCompletion();
+        return dto;
     }
 
     public async Task<string> UploadResumeAsync(string userId, Stream fileStream, string fileName, long fileSize)
@@ -339,29 +357,6 @@ public class FreelancerProfileService : IFreelancerProfileService
         return (stream, contentType, fileName);
     }
 
-    public async Task<FreelancerProfileDto> UpdateSocialLinksAsync(string userId, UpdateSocialLinksDto dto)
-    {
-        var profile = await _profileRepository.GetProfileWithDetailsAsync(userId);
-        if (profile == null)
-        {
-            throw new KeyNotFoundException("Profile not found.");
-        }
-
-        ValidateSocialLinks(dto.GitHubUrl, dto.LinkedInUrl, dto.PortfolioWebsiteUrl, dto.TwitterUrl);
-
-        profile.GitHubUrl = dto.GitHubUrl;
-        profile.LinkedInUrl = dto.LinkedInUrl;
-        profile.PortfolioWebsiteUrl = dto.PortfolioWebsiteUrl;
-        profile.TwitterUrl = dto.TwitterUrl;
-        profile.LastModifiedAt = DateTime.UtcNow;
-        profile.LastModifiedBy = userId;
-
-        _profileRepository.Update(profile);
-        await _unitOfWork.SaveChangesAsync();
-
-        return _mapper.Map<FreelancerProfileDto>(profile);
-    }
-
     private void ValidateExperience(bool isExperienced, int? years, int? months)
     {
         if (isExperienced)
@@ -406,7 +401,7 @@ public class FreelancerProfileService : IFreelancerProfileService
     {
         if (skillNames == null || !skillNames.Any())
         {
-            throw new ArgumentException("At least one skill is required.");
+            return;
         }
 
         foreach (var skillName in skillNames.Distinct())

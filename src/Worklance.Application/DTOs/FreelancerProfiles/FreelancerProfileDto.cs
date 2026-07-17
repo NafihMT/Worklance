@@ -47,4 +47,94 @@ public class FreelancerProfileDto
     public ICollection<FreelancerCertificationDto> Certifications { get; set; } = new List<FreelancerCertificationDto>();
     public ICollection<FreelancerPortfolioDto> Portfolios { get; set; } = new List<FreelancerPortfolioDto>();
     public ICollection<FreelancerLanguageDto> Languages { get; set; } = new List<FreelancerLanguageDto>();
+
+    public int ProfileCompletionPercentage { get; set; }
+    public ICollection<string> MissingSections { get; set; } = new List<string>();
+
+    public void CalculateCompletion()
+    {
+        var missing = new List<string>();
+        int pct = 0;
+
+        // 1. Basic Info (20%): Email, PhoneNumber, Country, City, Address
+        if (!string.IsNullOrEmpty(Email) &&
+            !string.IsNullOrEmpty(PhoneNumber) &&
+            !string.IsNullOrEmpty(Country) &&
+            !string.IsNullOrEmpty(City) &&
+            !string.IsNullOrEmpty(Address))
+        {
+            pct += 20;
+        }
+        else
+        {
+            missing.Add("Basic Info");
+        }
+
+        // 2. Professional Info (20%): ProfessionalTitle, AboutMe, PrimaryTechnologyStack, Specialization, HourlyRate
+        if (!string.IsNullOrEmpty(ProfessionalTitle) &&
+            !string.IsNullOrEmpty(AboutMe) &&
+            !string.IsNullOrEmpty(PrimaryTechnologyStack) &&
+            !string.IsNullOrEmpty(Specialization) &&
+            HourlyRate.HasValue)
+        {
+            pct += 20;
+        }
+        else
+        {
+            missing.Add("Professional Info");
+        }
+
+        // 3. Skills (15%)
+        if (Skills != null && Skills.Any())
+        {
+            pct += 15;
+        }
+        else
+        {
+            missing.Add("Skills");
+        }
+
+        // 4. Education (15%)
+        if (Educations != null && Educations.Any())
+        {
+            pct += 15;
+        }
+        else
+        {
+            missing.Add("Education");
+        }
+
+        // 5. Experience (10%)
+        if (!IsExperienced || (IsExperienced && (ExperienceYears.GetValueOrDefault() > 0 || ExperienceMonths.GetValueOrDefault() > 0)))
+        {
+            pct += 10;
+        }
+        else
+        {
+            missing.Add("Experience");
+        }
+
+        // 6. Portfolio (10%)
+        if (Portfolios != null && Portfolios.Any())
+        {
+            pct += 10;
+        }
+        else
+        {
+            missing.Add("Portfolio");
+        }
+
+        // 7. Resume (10%)
+        if (!string.IsNullOrEmpty(ResumeUrl))
+        {
+            pct += 10;
+        }
+        else
+        {
+            missing.Add("Resume");
+        }
+
+        ProfileCompletionPercentage = pct;
+        MissingSections = missing;
+    }
 }

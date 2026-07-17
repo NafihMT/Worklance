@@ -97,26 +97,8 @@ public class ProfileController : ControllerBase
         return Ok(profile);
     }
 
-    [Authorize]
-    [HttpDelete]
-    public async Task<IActionResult> DeleteProfile()
-    {
-        var userId = GetCurrentUserId();
-        if (string.IsNullOrEmpty(userId)) return Unauthorized();
-
-        try
-        {
-            await _profileService.DeleteProfileAsync(userId);
-            return NoContent();
-        }
-        catch (KeyNotFoundException ex)
-        {
-            return NotFound(new { Message = ex.Message });
-        }
-    }
 
     [Authorize]
-    [HttpPost("resume")]
     [HttpPut("resume")]
     public async Task<IActionResult> UploadResume(IFormFile file)
     {
@@ -184,25 +166,6 @@ public class ProfileController : ControllerBase
         }
     }
 
-    [Authorize]
-    [HttpPut("social-links")]
-    public async Task<IActionResult> UpdateSocialLinks([FromBody] UpdateSocialLinksDto dto)
-    {
-        var userId = GetCurrentUserId();
-        if (string.IsNullOrEmpty(userId)) return Unauthorized();
-
-        if (!ModelState.IsValid) return BadRequest(ModelState);
-
-        try
-        {
-            var profile = await _profileService.UpdateSocialLinksAsync(userId, dto);
-            return Ok(profile);
-        }
-        catch (KeyNotFoundException ex)
-        {
-            return NotFound(new { Message = ex.Message });
-        }
-    }
 
     [HttpGet("search")]
     public async Task<IActionResult> Search([FromQuery] string? searchTerm, [FromQuery] string? skill, [FromQuery] decimal? minHourlyRate, [FromQuery] decimal? maxHourlyRate)
