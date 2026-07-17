@@ -25,7 +25,7 @@ namespace Worklance.Domain.Entities.Job
 
         public string Tags { get; set; } = "[]";
 
-        public string? AttachmentUrl { get; set; }
+        public byte[]? AttachmentBytes { get; set; }
 
         public ICollection<JobSkill> JobSkills { get; set; } = new List<JobSkill>();
         public ICollection<Bid> Bids { get; set; } = new List<Bid>();

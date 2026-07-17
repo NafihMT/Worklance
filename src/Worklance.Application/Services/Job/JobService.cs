@@ -1,9 +1,11 @@
 using System.Text.Json;
+using Worklance.Application.DTOs.Category;
 using Worklance.Application.DTOs.Jobs;
 using Worklance.Application.Exceptions;
 using Worklance.Application.Interfaces.CloudinaryInterface;
 using Worklance.Application.Interfaces.Repositories;
 using Worklance.Application.Interfaces.Services;
+using Worklance.Domain.Entities;
 using Worklance.Domain.Entities.Job;
 using Worklance.Domain.Enums.Job;
 
@@ -13,12 +15,10 @@ public class JobService : IJobService
 {
     private readonly IJobRepository _jobRepository;
     private readonly IUnitOfWork _unitOfWork;
-    private readonly ICloudinaryService _cloudinaryService;
-    public JobService(IJobRepository jobRepository, IUnitOfWork unitOfWork, ICloudinaryService cloudinaryService)
+    public JobService(IJobRepository jobRepository, IUnitOfWork unitOfWork)
     {
         _jobRepository = jobRepository;
         _unitOfWork = unitOfWork;
-        _cloudinaryService = cloudinaryService;
     }
     public async Task<JobResponse> CreateJobAsync(string userId, CreateJobRequest request)
     {
@@ -28,12 +28,13 @@ public class JobService : IJobService
         if (clientProfileId == 0)
             throw new NotFoundException("Client profile not found for the current user.");
 
-        string? attachmentUrlString = null;
+        byte[]? attachmentBytes = null;
         if (request.AttachmentUrl != null && request.AttachmentUrl.Length > 0)
         {
-            using (var stream = request.AttachmentUrl.OpenReadStream())
+            using (var ms = new MemoryStream())
             {
-                attachmentUrlString = await _cloudinaryService.UploadFileAsync(stream, request.AttachmentUrl.FileName, "worklance/attachments");
+                await request.AttachmentUrl.CopyToAsync(ms);
+                attachmentBytes = ms.ToArray();
             }
         }
 
@@ -49,7 +50,7 @@ public class JobService : IJobService
             MaxHourlyRate = request.JobType == JobType.Hourly ? request.MaxHourlyRate : null,
             Deadline = request.Deadline,
             Tags = JsonSerializer.Serialize(request.Tags),
-            AttachmentUrl = attachmentUrlString,
+            AttachmentBytes = attachmentBytes,
             Status = JobStatus.Open,
             JobSkills = request.SkillIds
                 .Select(skillId => new JobSkill { SkillId = skillId })
@@ -76,7 +77,7 @@ public class JobService : IJobService
     public async Task<JobResponse> GetJobByIdAsync(int id)
     {
         var job = await _jobRepository.GetJobWithDetailsAsync(id);
-        
+
         if (job == null)
             throw new NotFoundException($"Job with ID {id} not found.");
 
@@ -104,7 +105,7 @@ public class JobService : IJobService
                 ? new List<string>()
                 : JsonSerializer.Deserialize<List<string>>(job.Tags) ?? new List<string>(),
             Skills = job.JobSkills?.Select(js => js.Skill.Name).ToList() ?? new List<string>(),
-            AttachmentUrl = job.AttachmentUrl,
+            AttachmentUrl = job.AttachmentBytes != null ? Convert.ToBase64String(job.AttachmentBytes) : null,
             CreatedAt = job.CreatedAt
         };
     }
@@ -139,7 +140,7 @@ public class JobService : IJobService
         });
     }
 
-    
+
 
     public async Task<JobResponse> UpdateJobAsync(int jobId, string userId, UpdateJobRequest request)
     {
@@ -154,12 +155,13 @@ public class JobService : IJobService
         await ValidateJobRequestAsync(request);
 
 
-        string? attachmentUrlString = job.AttachmentUrl;
+        byte[]? attachmentBytes = job.AttachmentBytes;
         if (request.AttachmentUrl != null && request.AttachmentUrl.Length > 0)
         {
-            using (var stream = request.AttachmentUrl.OpenReadStream())
+            using (var ms = new MemoryStream())
             {
-                attachmentUrlString = await _cloudinaryService.UploadFileAsync(stream, request.AttachmentUrl.FileName, "worklance/attachments");
+                await request.AttachmentUrl.CopyToAsync(ms);
+                attachmentBytes = ms.ToArray();
             }
         }
 
@@ -173,13 +175,13 @@ public class JobService : IJobService
         job.MinHourlyRate = request.JobType == JobType.Hourly ? request.MinHourlyRate : null;
         job.MaxHourlyRate = request.JobType == JobType.Hourly ? request.MaxHourlyRate : null;
         job.Deadline = request.Deadline;
-        job.AttachmentUrl = attachmentUrlString;
+        job.AttachmentBytes = attachmentBytes;
         job.Tags = JsonSerializer.Serialize(request.Tags);
 
         //Skills
 
         job.JobSkills.Clear();
-        foreach(var skillId in request.SkillIds)
+        foreach (var skillId in request.SkillIds)
         {
             job.JobSkills.Add(new JobSkill { SkillId = skillId });
         }
@@ -209,7 +211,7 @@ public class JobService : IJobService
         job.LastModifiedBy = userId;
 
         await _unitOfWork.SaveChangesAsync();
-   
+
     }
 
     public async Task CloseJobAsync(int jobId, string userId)
@@ -252,7 +254,7 @@ public class JobService : IJobService
         await _unitOfWork.SaveChangesAsync();
     }
 
-    public async Task<IEnumerable<JobResponse>>GetMyPostedJobsAsync(string userId, JobStatus? status)
+    public async Task<IEnumerable<JobResponse>> GetMyPostedJobsAsync(string userId, JobStatus? status)
     {
         var clientProfileId = await _jobRepository.GetClientProfileIdByUserIdAsync(userId);
         if (clientProfileId == 0)
@@ -262,6 +264,8 @@ public class JobService : IJobService
 
         return jobs.Select(MapToResponse);
     }
+
+
 
     // Helper Functions
 
@@ -277,7 +281,7 @@ public class JobService : IJobService
         {
             var validSkillIds = await _jobRepository.GetExistingSkillIdsAsync(
                 request.SkillIds,
-                request.CategoryId  
+                request.CategoryId
                 );
 
             var invalidIds = request.SkillIds.Except(validSkillIds).ToList();
@@ -293,6 +297,9 @@ public class JobService : IJobService
         {
             if (request.FixedBudget is null || request.FixedBudget <= 0)
                 throw new BadRequestException("Fixed budget is required for contract jobs.");
+
+            if (request.MaxHourlyRate is not null || request.MinHourlyRate is not null)
+                throw new BadRequestException("Hourly rates are not allowed for contract jobs");
         }
         else if (request.JobType == JobType.Hourly)
         {
@@ -304,6 +311,10 @@ public class JobService : IJobService
 
             if (request.MinHourlyRate > request.MaxHourlyRate)
                 throw new BadRequestException("Min hourly rate cannot exceed max hourly rate.");
+
+            if (request.FixedBudget is not null)
+                throw new BadRequestException(
+                    "Fixed budget is not allowed for hourly jobs.");
         }
 
         if (request.Deadline <= DateTime.UtcNow)
@@ -312,7 +323,7 @@ public class JobService : IJobService
 
 
     private async Task<Job> GetOwnedJobAsync(int jobId, string userId)
-    {   
+    {
         var job = await _jobRepository.GetJobForUpdateAsync(jobId, userId);
         if (job == null)
             throw new ForbiddenException("Job not found or you don't have permission to modify it.");

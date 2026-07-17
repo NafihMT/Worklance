@@ -1,3 +1,4 @@
+using Worklance.Application.DTOs.Category;
 using Worklance.Application.DTOs.Jobs;
 using Worklance.Domain.Enums.Job;
 

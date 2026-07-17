@@ -121,4 +121,13 @@ public class JobRepository : GenericRepository<Job>, IJobRepository
             .OrderByDescending(j => j.CreatedAt)
             .ToListAsync();
     }
+
+    public async Task<bool> CategoryNameExistsAsync(string categoryName)
+    {
+        return await _context.Categories
+            .AsNoTracking()
+            .AnyAsync(c =>
+                c.Name.ToLower() == categoryName.Trim().ToLower()
+                && !c.IsDeleted);
+    }
 }

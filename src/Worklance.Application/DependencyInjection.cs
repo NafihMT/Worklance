@@ -25,6 +25,7 @@ public static class DependencyInjection
 
 
         services.AddScoped<IJobService, JobService>();
+        services.AddScoped<IAdminService, AdminService>();
 
         return services;
     }

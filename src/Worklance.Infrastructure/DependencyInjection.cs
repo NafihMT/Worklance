@@ -51,6 +51,7 @@ public static class DependencyInjection
 
         // Job Module Repositories
         services.AddScoped<IJobRepository, JobRepository>();
+        services.AddScoped<ICategoryRepository, CategoryRepository>();
 
         return services;
     }

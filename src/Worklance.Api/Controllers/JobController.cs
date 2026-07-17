@@ -27,7 +27,7 @@ public class JobsController : ControllerBase
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
         if (string.IsNullOrEmpty(userId))
-            return Unauthorized(ApiResponse<object>.Failure(
+            return Unauthorized(ApiResponse.Failure(
                 "Unauthorized access",
                 StatusCodes.Status401Unauthorized));
 
@@ -35,7 +35,7 @@ public class JobsController : ControllerBase
         return CreatedAtAction(
             nameof(GetJobById),
             new { id = result.JobId },
-            ApiResponse<JobResponse>.Success(
+            ApiResponse.Success(
                 result,
                 "Job created successfully",
                 StatusCodes.Status201Created));
@@ -47,9 +47,10 @@ public class JobsController : ControllerBase
     public async Task<IActionResult> GetJobs()
     {
         var jobs = await _jobService.GetAllJobsAsync();
-        return Ok(ApiResponse<IEnumerable<JobResponse>>.Success(
+        return Ok(ApiResponse.Success(
             jobs,
-            "Job retrieved successfully."));
+            "Job retrieved successfully.",
+            StatusCodes.Status200OK));
 
     }
 
@@ -58,27 +59,30 @@ public class JobsController : ControllerBase
     public async Task<IActionResult> GetJobById(int id)
     {
         var job = await _jobService.GetJobByIdAsync(id);
-        return Ok(ApiResponse<JobResponse>.Success(
+        return Ok(ApiResponse.Success(
             job,
-            "Job retrieved successfully"));
+            "Job retrieved successfully",
+            StatusCodes.Status200OK));
     }
 
     [HttpGet("categories")]
     public async Task<IActionResult> GetCategories()
     {
         var categories = await _jobService.GetAllCategoriesAsync();
-        return Ok(ApiResponse<IEnumerable<CategoryDto>>.Success(
+        return Ok(ApiResponse.Success(
             categories,
-            "Category retrieved successfully"));
+            "Category retrieved successfully",
+            StatusCodes.Status200OK));
     }
 
     [HttpGet("categories/{categoryId}/skills")]
     public async Task<IActionResult> GetSkillsByCategory(int categoryId)
     {
         var skills = await _jobService.GetSkillsByCategoryIdAsync(categoryId);
-        return Ok(ApiResponse<IEnumerable<CategorySkillDto>>.Success(
+        return Ok(ApiResponse.Success(
             skills,
-            "Skills retrieved successfully"));
+            "Skills retrieved successfully",
+            StatusCodes.Status200OK));
     }
 
     [HttpPut("{id}")]
@@ -88,15 +92,16 @@ public class JobsController : ControllerBase
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (string.IsNullOrEmpty(userId))
             return Unauthorized(
-             ApiResponse<object>.Failure(
+             ApiResponse.Failure(
                  "Unauthorized access",
                  StatusCodes.Status401Unauthorized));
 
         var result = await _jobService.UpdateJobAsync(id, userId, request);
 
-        return Ok(ApiResponse<JobResponse>.Success(
+        return Ok(ApiResponse.Success(
             result,
-            "Job updated successfully"));
+            "Job updated successfully",
+            StatusCodes.Status200OK));
     }
 
     [HttpDelete("{id}")]
@@ -106,15 +111,15 @@ public class JobsController : ControllerBase
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (string.IsNullOrEmpty(userId))
             return Unauthorized(
-             ApiResponse<object>.Failure(
+             ApiResponse.Failure(
                  "Unauthorized access",
                  StatusCodes.Status401Unauthorized));
 
         await _jobService.SoftDeleteJobAsync(id, userId);
 
-        return Ok(ApiResponse<object>.Success(
-
-            "Job deleted successfully"));
+        return Ok(ApiResponse.Success(
+            "Job deleted successfully",
+            StatusCodes.Status200OK));
 
     }
 
@@ -126,16 +131,16 @@ public class JobsController : ControllerBase
         if (string.IsNullOrWhiteSpace(userId))
         {
             return Unauthorized(
-                ApiResponse<object>.Failure(
+                ApiResponse.Failure(
                     "Unauthorized access",
                     StatusCodes.Status401Unauthorized));
         }
 
         await _jobService.CloseJobAsync(id, userId);
 
-        return Ok(ApiResponse<object>.Success(
-
-            "Job closed successfully."));
+        return Ok(ApiResponse.Success(
+            "Job closed successfully",
+            StatusCodes.Status200OK));
     }
 
     [HttpPatch("{id}/reopen")]
@@ -146,16 +151,16 @@ public class JobsController : ControllerBase
         if (string.IsNullOrWhiteSpace(userId))
         {
             return Unauthorized(
-                ApiResponse<object>.Failure(
+                ApiResponse.Failure(
                     "Unauthorized access",
                     StatusCodes.Status401Unauthorized));
         }
 
         await _jobService.ReopenJobAsync(id, userId);
 
-        return Ok(ApiResponse<object>.Success(
-
-            "Job reopened successfully."));
+        return Ok(ApiResponse.Success(
+            "Job reopened successfully",
+            StatusCodes.Status200OK));
     }
 
     [HttpPatch("{id}/cancel")]
@@ -166,16 +171,16 @@ public class JobsController : ControllerBase
         if (string.IsNullOrWhiteSpace(userId))
         {
             return Unauthorized(
-                ApiResponse<object>.Failure(
+                ApiResponse.Failure(
                     "Unauthorized access",
                     StatusCodes.Status401Unauthorized));
         }
 
         await _jobService.CancelJobAsync(id, userId);
 
-        return Ok(ApiResponse<object>.Success(
-
-            "Job cancelled successfully."));
+        return Ok(ApiResponse.Success(
+            "Job cancelled successfully.",
+            StatusCodes.Status200OK));
     }
 
     [HttpGet("my-jobs")]
@@ -185,15 +190,16 @@ public class JobsController : ControllerBase
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (string.IsNullOrWhiteSpace(userId))
             return Unauthorized(
-                ApiResponse<object>.Failure(
+                ApiResponse.Failure(
                     "Unauthorized access",
                     StatusCodes.Status401Unauthorized));
 
         var jobs = await _jobService.GetMyPostedJobsAsync(userId, status);
 
-        return Ok(ApiResponse<IEnumerable<JobResponse>>.Success(
+        return Ok(ApiResponse.Success(
             jobs,
-            "Jobs retrieved successfully"));
+            "Jobs retrieved successfully",
+            StatusCodes.Status200OK));
 
     }
 }

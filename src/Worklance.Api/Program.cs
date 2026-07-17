@@ -54,22 +54,10 @@ public class Program
                     }
                     return Task.CompletedTask;
                 },
-                OnAuthenticationFailed = async context =>
+                OnAuthenticationFailed = context =>
                 {
-                    context.NoResult();
-                    context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-                    context.Response.ContentType = "application/json";
-                    string message = "Please login.";
-
-                    if (context.Exception is SecurityTokenExpiredException)
-                    {
-                        message = "Session expired. Please login again.";
-                    }
-
-                    await context.Response.WriteAsJsonAsync(
-                        ApiResponse<object>.Failure(
-                            message,
-                            StatusCodes.Status401Unauthorized));
+                    Console.WriteLine("OnAuthenticationFailed: " + context.Exception.Message);
+                    return Task.CompletedTask;
                 },
                 OnChallenge = async context =>
                 {
@@ -80,9 +68,15 @@ public class Program
                     context.Response.StatusCode = StatusCodes.Status401Unauthorized;
                     context.Response.ContentType = "application/json";
 
+                    var message = "Please Login";
+                    if (context.AuthenticateFailure is SecurityTokenExpiredException)
+                    {
+                        message = "Session expired. Please login again.";
+                    }
+
                     await context.Response.WriteAsJsonAsync(
-                        ApiResponse<object>.Failure(
-                            "Please Login",
+                        ApiResponse.Failure(
+                            message,
                             StatusCodes.Status401Unauthorized));
                 },
                 OnTokenValidated = context =>

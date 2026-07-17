@@ -17,5 +17,7 @@ namespace Worklance.Application.Interfaces.Repositories
         Task<Job?> GetJobForUpdateAsync(int jobId, string userId);
 
         Task<IReadOnlyList<Job>> GetJobsByClientProfileIdAsync(int clientProfileId, JobStatus? status);
+
+        Task<bool> CategoryNameExistsAsync(string categoryName);
     }
 }
