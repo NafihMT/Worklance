@@ -5,9 +5,6 @@ using System.Reflection;
 using Worklance.Application.Interfaces.Services;
 using Worklance.Application.Mapping.FreelancerProfileMapping;
 using Worklance.Application.Services;
-using Microsoft.Extensions.DependencyInjection;
-using FluentValidation;
-using System.Reflection;
 
 namespace Worklance.Application;
 

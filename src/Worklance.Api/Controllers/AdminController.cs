@@ -37,7 +37,7 @@ namespace Worklance.Api.Controllers
 
                 return Ok(ApiResponse.Success(pendingUsers, "Pending verifications retrieved successfully.", 200));
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return StatusCode(500, ApiResponse.Failure("An error occurred while fetching pending users. Please try again later.", 500));
             }
