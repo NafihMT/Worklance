@@ -19,15 +19,15 @@ public class AuthRepository : GenericRepository<User>, IAuthRepository
         return await _context.Users.AnyAsync(x => x.Email == email);
     }
 
-    public async Task<bool> PhoneNumberExistsAsync(string phoneNumber)
-    {
-        return await _context.Users.AnyAsync(x => x.PhoneNumber == phoneNumber);
-    }
+        public async Task<bool> PhoneNumberExistsAsync(long phoneNumber)
+        {
+            return await _context.Users.AnyAsync(x => x.PhoneNumber == phoneNumber);
+        }
 
-    public async Task<bool> AadhaarNumberExistsAsync(string aadhaarNumber)
-    {
-        return await _context.Users.AnyAsync(x => x.AadhaarNumber == aadhaarNumber);
-    }
+        public async Task<bool> AadhaarNumberExistsAsync(long aadhaarNumber)
+        {
+            return await _context.Users.AnyAsync(x => x.AadhaarNumber == aadhaarNumber);
+        }
 
     public async Task AddUserAsync(User user)
     {

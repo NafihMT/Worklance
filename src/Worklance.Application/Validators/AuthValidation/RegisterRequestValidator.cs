@@ -21,10 +21,8 @@ namespace Worklance.Application.Validators.AuthValidation
                 .NotEmpty()
                 .EmailAddress();
             RuleFor(x => x.PhoneNumber)
-                .NotEmpty()
-                .Matches(@"^\d{10}$")
-                .WithMessage("Phone number must contain exactly 10 digits.");
-            
+     .InclusiveBetween(1000000000L, 9999999999L).WithMessage("Phone number must contain exactly 10 digits.");
+
             RuleFor(x => x.Password)
                 .NotEmpty()
                 .Matches(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z\d]).{8,}$")
@@ -34,14 +32,14 @@ namespace Worklance.Application.Validators.AuthValidation
                 .NotEmpty()
                 .Equal(x => x.Password)
                 .WithMessage("Password and Confirm Password must match.");
+
             RuleFor(x => x.AadhaarNumber)
-                .NotEmpty()
-                .Length(12)
-                .Matches(@"^\d{12}$");
+           .InclusiveBetween(100000000000L, 999999999999L)
+           .WithMessage("Aadhaar Number must contain exactly 12 digits.");
+
             RuleFor(x => x.AadhaarImageBytes)
-                .NotEmpty().WithMessage("Aadhaar Image is required");
-            RuleFor(x => x.AccountType)
-                .IsInEnum();
+                .NotEmpty()
+                .WithMessage("Aadhaar proof image is required.");
         }
     }
 }

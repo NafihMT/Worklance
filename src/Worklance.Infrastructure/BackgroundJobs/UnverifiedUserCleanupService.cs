@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Dapper;
-using Worklance.Infrastructure.Queries; // Fixes DapperContext error
+using Worklance.Infrastructure.Queries; 
 
 namespace Worklance.Api.BackgroundJobs
 {
@@ -21,15 +21,24 @@ namespace Worklance.Api.BackgroundJobs
         {
             while (!stoppingToken.IsCancellationRequested)
             {
-                using (var scope = _serviceProvider.CreateScope())
+                try
                 {
-                    var dapperContext = scope.ServiceProvider.GetRequiredService<DapperContext>();
-                    var cutoffTime = DateTime.UtcNow.AddMinutes(-30);
-                    var sql = "DELETE FROM Users WHERE EmailVerified = 0 AND CreatedAt < @Cutoff";
+                    using (var scope = _serviceProvider.CreateScope())
+                    {
+                        var dapperContext = scope.ServiceProvider.GetRequiredService<DapperContext>();
+                        var cutoffTime = DateTime.UtcNow.AddMinutes(-30);
 
-                    using var connection = dapperContext.CreateConnection();
-                    await connection.ExecuteAsync(sql, new { Cutoff = cutoffTime });
+                        var sql = "DELETE FROM Users WHERE EmailVerified = 0 AND CreatedAt < @Cutoff";
+
+                        using var connection = dapperContext.CreateConnection();
+                        await connection.ExecuteAsync(sql, new { Cutoff = cutoffTime });
+                    }
                 }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[BACKGROUND JOB ERROR]: {ex.Message}");
+                }
+
                 await Task.Delay(TimeSpan.FromMinutes(30), stoppingToken);
             }
         }

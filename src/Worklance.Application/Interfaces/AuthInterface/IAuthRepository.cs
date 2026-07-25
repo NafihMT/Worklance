@@ -6,10 +6,12 @@ namespace Worklance.Application.Interfaces.AuthInterface;
 
 public interface IAuthRepository : IGenericRepository<User>
 {
-    // Duplicate Validation
-    Task<bool> EmailExistsAsync(string email);
-    Task<bool> PhoneNumberExistsAsync(string phoneNumber);
-    Task<bool> AadhaarNumberExistsAsync(string aadhaarNumber);
+    public interface IAuthRepository
+    {
+        // Duplicate Validation
+        Task<bool> EmailExistsAsync(string email);
+        Task<bool> PhoneNumberExistsAsync(long phoneNumber);
+        Task<bool> AadhaarNumberExistsAsync(long aadhaarNumber);
 
     // User
     Task AddUserAsync(User user);
