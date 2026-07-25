@@ -12,8 +12,8 @@ namespace Worklance.Application.Interfaces.AuthInterface
     {
         // Duplicate Validation
         Task<bool> EmailExistsAsync(string email);
-        Task<bool> PhoneNumberExistsAsync(string phoneNumber);
-        Task<bool> AadhaarNumberExistsAsync(string aadhaarNumber);
+        Task<bool> PhoneNumberExistsAsync(long phoneNumber);
+        Task<bool> AadhaarNumberExistsAsync(long aadhaarNumber);
 
         // User
         Task AddUserAsync(User user);
