@@ -56,7 +56,8 @@ public class JobRepository : GenericRepository<Job>, IJobRepository
         return await _context.Categories
             .AsNoTracking()
             .Where(c => !c.IsDeleted)
-            .Include(c => c.Skills)
+            .Include(c => c.CategorySkills)
+                .ThenInclude(cs => cs.Skill)
             .OrderBy(c => c.Name)
             .ToListAsync();
     }
@@ -65,7 +66,7 @@ public class JobRepository : GenericRepository<Job>, IJobRepository
     {
         return await _context.Skills
             .AsNoTracking()
-            .Where(s => s.Categories.Any(c => c.Id == categoryId))
+            .Where(s => s.CategorySkills.Any(c => c.CategoryId == categoryId))
             .OrderBy(c => c.Name)
             .ToListAsync();
     }
@@ -74,7 +75,7 @@ public class JobRepository : GenericRepository<Job>, IJobRepository
     {
         return await _context.Skills
             .AsNoTracking()
-            .Where(s => skillIds.Contains(s.Id) && s.Categories.Any(c => c.Id == categoryId))
+            .Where(s => skillIds.Contains(s.Id) && s.CategorySkills.Any(c => c.CategoryId == categoryId))
             .Select(s => s.Id)
             .ToListAsync();
     }
@@ -102,7 +103,6 @@ public class JobRepository : GenericRepository<Job>, IJobRepository
 
     public async Task<IReadOnlyList<Job>> GetJobsByClientProfileIdAsync(int clientProfileId, JobStatus? status)
     {
-        // Filtering by Status
         var query = _context.Jobs
             .AsNoTracking()
             .AsSplitQuery()

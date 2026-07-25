@@ -16,6 +16,7 @@ namespace Worklance.Domain.Entities.Job
 
         public JobType JobType { get; set; }
         public JobStatus Status { get; set; } = JobStatus.Open;
+        public bool IsOpen { get; set; } = true;
 
         public decimal? FixedBudget { get; set; }
         public decimal? MinHourlyRate { get; set; }
@@ -27,8 +28,10 @@ namespace Worklance.Domain.Entities.Job
 
         public byte[]? AttachmentBytes { get; set; }
 
+
         public ICollection<JobSkill> JobSkills { get; set; } = new List<JobSkill>();
         public ICollection<Bid> Bids { get; set; } = new List<Bid>();
+        public ICollection<JobApplication> JobApplications { get; set; } = new List<JobApplication>();
 
         public bool IsDeleted { get; set; } = false;
         public DateTime? DeletedAt { get; set; }

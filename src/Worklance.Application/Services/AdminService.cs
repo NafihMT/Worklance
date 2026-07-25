@@ -53,13 +53,19 @@ namespace Worklance.Application.Services
                     var existingSkill = await _skillRepository.GetByNameAsync(trimmedSkillName);
                     if (existingSkill != null)
                     {
-                        category.Skills.Add(existingSkill);
+                        category.CategorySkills.Add(new CategorySkill
+                        {
+                            Skill = existingSkill
+                        });
                     }
                     else
                     {
-                        category.Skills.Add(new Skill
+                        category.CategorySkills.Add(new CategorySkill
                         {
-                            Name = trimmedSkillName
+                            Skill = new Skill
+                            {
+                                Name = trimmedSkillName
+                            }
                         });
                     }
                 }
@@ -123,16 +129,22 @@ namespace Worklance.Application.Services
 
             if (existingSkill != null)
             {
-                if (category.Skills.Any(s => s.Id == existingSkill.Id))
+                if (category.CategorySkills.Any(cs => cs.SkillId == existingSkill.Id))
                     throw new BadRequestException($"Skill '{trimmedSkillName}' already belongs to this category.");
 
-                category.Skills.Add(existingSkill);
+                category.CategorySkills.Add(new CategorySkill
+                {
+                    Skill = existingSkill
+                });
             }
             else
             {
-                category.Skills.Add(new Skill
+                category.CategorySkills.Add(new CategorySkill
                 {
-                    Name = trimmedSkillName
+                    Skill = new Skill
+                    {
+                        Name = trimmedSkillName
+                    }
                 });
             }
 
@@ -162,10 +174,10 @@ namespace Worklance.Application.Services
             _skillRepository.Update(skill);
             await _unitOfWork.SaveChangesAsync();
 
-            var firstCategory = skill.Categories.FirstOrDefault();
+            var firstCategory = skill.CategorySkills.FirstOrDefault();
             if (firstCategory != null)
             {
-                var category = await _categoryRepository.GetByIdWithSkillsAsync(firstCategory.Id);
+                var category = await _categoryRepository.GetByIdWithSkillsAsync(firstCategory.CategoryId);
                 if (category != null)
                 {
                     return MapToResponse(category);
@@ -213,7 +225,7 @@ namespace Worklance.Application.Services
                 Id = category.Id,
                 Name = category.Name,
                 Description = category.Description,
-                Skills = category.Skills?.Select(s => s.Name).ToList() ?? new List<string>()
+                Skills = category.CategorySkills?.Select(cs => cs.Skill?.Name).Where(name => name != null).ToList()! ?? new List<string>()
             };
         }
     }

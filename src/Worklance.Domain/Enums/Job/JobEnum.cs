@@ -10,9 +10,12 @@ namespace Worklance.Domain.Enums.Job
     {
         Draft = 1,
         Open = 2,
-        InProgress = 3,
-        Completed = 4,
-        Closed = 5,
-        Cancelled = 6
+        Assigned = 3,
+        InProgress = 4,
+        Delivered = 5,
+        Verified = 6,
+        NotVerified = 7,
+        Completed = 8,
+        Cancelled = 9
     }
 }

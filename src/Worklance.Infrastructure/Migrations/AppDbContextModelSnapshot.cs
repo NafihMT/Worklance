@@ -22,21 +22,6 @@ namespace Worklance.Infrastructure.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("CategorySkill", b =>
-                {
-                    b.Property<int>("CategoryId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("SkillId")
-                        .HasColumnType("int");
-
-                    b.HasKey("CategoryId", "SkillId");
-
-                    b.HasIndex("SkillId");
-
-                    b.ToTable("CategorySkill");
-                });
-
             modelBuilder.Entity("FreelancerSkill", b =>
                 {
                     b.Property<int>("FreelancerProfileId")
@@ -550,6 +535,21 @@ namespace Worklance.Infrastructure.Migrations
                     b.ToTable("Categories");
                 });
 
+            modelBuilder.Entity("Worklance.Domain.Entities.Job.CategorySkill", b =>
+                {
+                    b.Property<int>("CategoryId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SkillId")
+                        .HasColumnType("int");
+
+                    b.HasKey("CategoryId", "SkillId");
+
+                    b.HasIndex("SkillId");
+
+                    b.ToTable("CategorySkills", (string)null);
+                });
+
             modelBuilder.Entity("Worklance.Domain.Entities.Job.Job", b =>
                 {
                     b.Property<int>("Id")
@@ -588,6 +588,9 @@ namespace Worklance.Infrastructure.Migrations
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsOpen")
                         .HasColumnType("bit");
 
                     b.Property<string>("JobType")
@@ -667,21 +670,6 @@ namespace Worklance.Infrastructure.Migrations
                         .IsUnique();
 
                     b.ToTable("Skills", (string)null);
-                });
-
-            modelBuilder.Entity("CategorySkill", b =>
-                {
-                    b.HasOne("Worklance.Domain.Entities.Job.Category", null)
-                        .WithMany()
-                        .HasForeignKey("CategoryId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Worklance.Domain.Entities.Skill", null)
-                        .WithMany()
-                        .HasForeignKey("SkillId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
                 });
 
             modelBuilder.Entity("FreelancerSkill", b =>
@@ -776,6 +764,25 @@ namespace Worklance.Infrastructure.Migrations
                     b.Navigation("Job");
                 });
 
+            modelBuilder.Entity("Worklance.Domain.Entities.Job.CategorySkill", b =>
+                {
+                    b.HasOne("Worklance.Domain.Entities.Job.Category", "Category")
+                        .WithMany("CategorySkills")
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Worklance.Domain.Entities.Skill", "Skill")
+                        .WithMany("CategorySkills")
+                        .HasForeignKey("SkillId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Category");
+
+                    b.Navigation("Skill");
+                });
+
             modelBuilder.Entity("Worklance.Domain.Entities.Job.Job", b =>
                 {
                     b.HasOne("Worklance.Domain.Entities.Job.Category", "Category")
@@ -804,7 +811,7 @@ namespace Worklance.Infrastructure.Migrations
                         .IsRequired();
 
                     b.HasOne("Worklance.Domain.Entities.Skill", "Skill")
-                        .WithMany()
+                        .WithMany("JobSkills")
                         .HasForeignKey("SkillId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
@@ -832,9 +839,21 @@ namespace Worklance.Infrastructure.Migrations
                     b.Navigation("Portfolios");
                 });
 
+            modelBuilder.Entity("Worklance.Domain.Entities.Job.Category", b =>
+                {
+                    b.Navigation("CategorySkills");
+                });
+
             modelBuilder.Entity("Worklance.Domain.Entities.Job.Job", b =>
                 {
                     b.Navigation("Bids");
+
+                    b.Navigation("JobSkills");
+                });
+
+            modelBuilder.Entity("Worklance.Domain.Entities.Skill", b =>
+                {
+                    b.Navigation("CategorySkills");
 
                     b.Navigation("JobSkills");
                 });

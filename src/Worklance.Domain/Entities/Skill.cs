@@ -8,9 +8,8 @@ public class Skill : BaseEntity
 {
     public string Name { get; set; } = string.Empty;
 
-    // Navigation Property
-    public ICollection<Category> Categories { get; set; } = new List<Category>();
+    public ICollection<CategorySkill> CategorySkills { get; set; } = new List<CategorySkill>();
+    public ICollection<JobSkill> JobSkills { get; set; } = new List<JobSkill>();
 
-    // Navigation Property
     public ICollection<FreelancerProfile> FreelancerProfiles { get; set; } = new List<FreelancerProfile>();
 }

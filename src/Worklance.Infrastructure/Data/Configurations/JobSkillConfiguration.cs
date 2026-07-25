@@ -1,6 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using Worklance.Domain.Entities;
 using Worklance.Domain.Entities.Job;
 
 namespace Worklance.Infrastructure.Persistence.Configurations;
@@ -19,7 +18,7 @@ public class JobSkillConfiguration : IEntityTypeConfiguration<JobSkill>
             .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasOne(js => js.Skill)
-            .WithMany()
+            .WithMany(s => s.JobSkills)
             .HasForeignKey(js => js.SkillId)
             .OnDelete(DeleteBehavior.Restrict);
     }

@@ -6,7 +6,7 @@ using Worklance.Application.Interfaces.Services;
 using Worklance.Domain.Entities.Job;
 using Worklance.Domain.Enums.Job;
 
-namespace Worklance.Application.Services;
+namespace Worklance.Application.Services.Jobs;
 
 public class JobService : IJobService
 {
@@ -48,7 +48,7 @@ public class JobService : IJobService
             Deadline = request.Deadline,
             Tags = JsonSerializer.Serialize(request.Tags),
             AttachmentBytes = attachmentBytes,
-            Status = JobStatus.Open,
+            IsOpen = true,
             JobSkills = request.SkillIds
                 .Select(skillId => new JobSkill { SkillId = skillId })
                 .ToList(),
@@ -93,7 +93,7 @@ public class JobService : IJobService
             CategoryId = job.CategoryId,
             CategoryName = job.Category?.Name ?? string.Empty,
             JobType = job.JobType,
-            Status = job.Status,
+            IsOpen = job.IsOpen,
             FixedBudget = job.FixedBudget,
             MinHourlyRate = job.MinHourlyRate,
             MaxHourlyRate = job.MaxHourlyRate,
@@ -115,10 +115,10 @@ public class JobService : IJobService
             Id = c.Id,
             Name = c.Name,
             Description = c.Description,
-            Skills = c.Skills.Select(s => new CategorySkillDto
+            Skills = c.CategorySkills.Select(cs => new CategorySkillDto
             {
-                Id = s.Id,
-                Name = s.Name
+                Id = cs.Skill.Id,
+                Name = cs.Skill.Name
             }).ToList()
         });
     }
@@ -146,7 +146,7 @@ public class JobService : IJobService
         if (job == null)
             throw new NotFoundException("Job not found or you don't have permission.");
 
-        if (job.Status != JobStatus.Open)
+        if (!job.IsOpen)
             throw new BadRequestException("Only open jobs can be edited.");
 
         await ValidateJobRequestAsync(request);
@@ -162,7 +162,6 @@ public class JobService : IJobService
             }
         }
 
-        // Update fields
 
         job.Title = request.Title.Trim();
         job.Description = request.Description.Trim();
@@ -175,7 +174,6 @@ public class JobService : IJobService
         job.AttachmentBytes = attachmentBytes;
         job.Tags = JsonSerializer.Serialize(request.Tags);
 
-        //Skills
 
         job.JobSkills.Clear();
         foreach (var skillId in request.SkillIds)
@@ -214,10 +212,10 @@ public class JobService : IJobService
     public async Task CloseJobAsync(int jobId, string userId)
     {
         var job = await GetOwnedJobAsync(jobId, userId);
-        if (job.Status != JobStatus.Open)
+        if (!job.IsOpen)
             throw new BadRequestException("Only open Job can be closed");
 
-        job.Status = JobStatus.Closed;
+        job.IsOpen = true;
         job.LastModifiedAt = DateTime.UtcNow;
         job.LastModifiedBy = userId;
 
@@ -226,10 +224,10 @@ public class JobService : IJobService
     public async Task ReopenJobAsync(int jobId, string userId)
     {
         var job = await GetOwnedJobAsync(jobId, userId);
-        if (job.Status != JobStatus.Closed && job.Status != JobStatus.Cancelled)
-            throw new BadRequestException("Only Closed or Cancelled jobs can be reopened");
+        if (job.IsOpen)
+            throw new BadRequestException("Only Closed jobs can be reopened");
 
-        job.Status = JobStatus.Open;
+        job.IsOpen = true;
         job.LastModifiedAt = DateTime.UtcNow;
         job.LastModifiedBy = userId;
 
@@ -245,6 +243,7 @@ public class JobService : IJobService
             throw new BadRequestException("Job is already Cancelled");
 
         job.Status = JobStatus.Cancelled;
+        job.IsOpen = true;
         job.LastModifiedAt = DateTime.UtcNow;
         job.LastModifiedBy = userId;
 

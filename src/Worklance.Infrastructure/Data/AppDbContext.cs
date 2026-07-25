@@ -14,11 +14,15 @@ public class AppDbContext : DbContext
     public DbSet<FreelancerProfile> FreelancerProfiles => Set<FreelancerProfile>();
     public DbSet<Skill> Skills => Set<Skill>();
     public DbSet<Job> Jobs => Set<Job>();
+    public DbSet<JobApplication> JobApplications => Set<JobApplication>();
     public DbSet<Category> Categories => Set<Category>();
+    public DbSet<CategorySkill> CategorySkills => Set<CategorySkill>();
+
     public DbSet<FreelancerEducation> FreelancerEducations => Set<FreelancerEducation>();
     public DbSet<FreelancerCertification> FreelancerCertifications => Set<FreelancerCertification>();
     public DbSet<FreelancerPortfolio> FreelancerPortfolios => Set<FreelancerPortfolio>();
     public DbSet<FreelancerLanguage> FreelancerLanguages => Set<FreelancerLanguage>();
+
     public DbSet<User> Users { get; set; }
     public DbSet<EmailOtp> EmailOtps { get; set; }
     public DbSet<RefreshToken> RefreshTokens { get; set; }
