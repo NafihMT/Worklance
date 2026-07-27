@@ -12,9 +12,9 @@ namespace Worklance.Api.Controllers
     [Route("api/categories")]
     public class CategoriesController : ControllerBase
     {
-        private readonly IAdminService _adminService;
+        private readonly ICategoryService _adminService;
 
-        public CategoriesController(IAdminService adminService)
+        public CategoriesController(ICategoryService adminService)
         {
             _adminService = adminService;
         }

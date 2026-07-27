@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Worklance.Application.DTOs.Category;
 using Worklance.Application.Exceptions;
 using Worklance.Application.Interfaces.Repositories;
@@ -11,13 +7,13 @@ using Worklance.Domain.Entities.Job;
 
 namespace Worklance.Application.Services
 {
-    public class AdminService : IAdminService
+    public class CategoryService : ICategoryService
     {
         private readonly ICategoryRepository _categoryRepository;
         private readonly ISkillRepository _skillRepository;
         private readonly IUnitOfWork _unitOfWork;
 
-        public AdminService(
+        public CategoryService(
             ICategoryRepository categoryRepository,
             ISkillRepository skillRepository,
             IUnitOfWork unitOfWork)
@@ -151,6 +147,7 @@ namespace Worklance.Application.Services
             _categoryRepository.Update(category);
             await _unitOfWork.SaveChangesAsync();
 
+            // Refresh category to include the new skill
             var updatedCategory = await _categoryRepository.GetByIdWithSkillsAsync(categoryId);
             return MapToResponse(updatedCategory ?? category);
         }

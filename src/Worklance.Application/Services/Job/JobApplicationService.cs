@@ -1,8 +1,8 @@
 using System.IO;
 using AutoMapper;
+using Worklance.Application.DTOs.FreelancerProfiles;
 using Worklance.Application.DTOs.JobApplications;
 using Worklance.Application.Exceptions;
-using Worklance.Application.Interfaces.AuthInterface;
 using Worklance.Application.Interfaces.Repositories;
 using Worklance.Application.Interfaces.Services;
 using Worklance.Domain.Entities.Job;
@@ -15,7 +15,7 @@ public class JobApplicationService : IJobApplicationService
     private readonly IJobApplicationRepository _jobApplicationRepository;
     private readonly IJobRepository _jobRepository;
     private readonly IFreelancerProfileRepository _freelancerProfileRepository;
-    private readonly IAuthRepository _authRepository;
+    private readonly IFileStorageService _fileStorageService;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
 
@@ -23,29 +23,23 @@ public class JobApplicationService : IJobApplicationService
         IJobApplicationRepository jobApplicationRepository,
         IJobRepository jobRepository,
         IFreelancerProfileRepository freelancerProfileRepository,
-        IAuthRepository authRepository,
+        IFileStorageService fileStorageService,
         IUnitOfWork unitOfWork,
         IMapper mapper)
     {
         _jobApplicationRepository = jobApplicationRepository;
         _jobRepository = jobRepository;
         _freelancerProfileRepository = freelancerProfileRepository;
-        _authRepository = authRepository;
+        _fileStorageService = fileStorageService;
         _unitOfWork = unitOfWork;
         _mapper = mapper;
     }
 
     public async Task<JobApplicationResponse> ApplyForJobAsync(int jobId, string userId, ApplyJobRequest request)
     {
-        if (string.IsNullOrWhiteSpace(userId) || !int.TryParse(userId, out var userIntId))
+        if (string.IsNullOrWhiteSpace(userId) || !int.TryParse(userId, out _))
         {
             throw new UnauthorizedException("User access token is missing or invalid.");
-        }
-
-        var user = await _authRepository.GetByIdAsync(userIntId);
-        if (user == null)
-        {
-            throw new UnauthorizedException("User account not found.");
         }
 
         var freelancerProfile = await _freelancerProfileRepository.GetProfileWithDetailsAsync(userId);
@@ -82,7 +76,6 @@ public class JobApplicationService : IJobApplicationService
             throw new BadRequestException("You have already applied for this job.");
         }
 
-        // Validate ProposedRate is above/equal to the base bid / budget
         if (job.JobType == JobType.Contract && job.FixedBudget.HasValue)
         {
             if (request.ProposedRate < job.FixedBudget.Value)
@@ -98,25 +91,25 @@ public class JobApplicationService : IJobApplicationService
             }
         }
 
-        if (request.CoverLetterFile == null || request.CoverLetterFile.Length == 0)
-        {
-            throw new BadRequestException("Cover letter file is required.");
-        }
+        string? coverLetterFileUrl = null;
+        string? coverLetterFileName = null;
 
-        byte[] coverLetterBytes;
-        using (var ms = new MemoryStream())
+        if (request.CoverLetterFile != null && request.CoverLetterFile.Length > 0)
         {
-            await request.CoverLetterFile.CopyToAsync(ms);
-            coverLetterBytes = ms.ToArray();
+            using (var stream = request.CoverLetterFile.OpenReadStream())
+            {
+                coverLetterFileName = request.CoverLetterFile.FileName;
+                coverLetterFileUrl = await _fileStorageService.SaveFileAsync(stream, coverLetterFileName, "cover-letters");
+            }
         }
 
         var application = new JobApplication
         {
             JobId = jobId,
             FreelancerProfileId = freelancerProfile.Id,
-            CoverLetterBytes = coverLetterBytes,
-            CoverLetterFileName = request.CoverLetterFile.FileName,
-            CoverLetterContentType = request.CoverLetterFile.ContentType ?? "application/octet-stream",
+            CoverLetterText = request.CoverLetterText?.Trim(),
+            CoverLetterFileUrl = coverLetterFileUrl,
+            CoverLetterFileName = coverLetterFileName,
             ProposedRate = request.ProposedRate,
             EstimatedDays = request.EstimatedDays,
             Status = JobApplicationStatus.Pending,
@@ -140,13 +133,7 @@ public class JobApplicationService : IJobApplicationService
             throw new UnauthorizedException("User context missing.");
         }
 
-        var freelancerProfile = await _freelancerProfileRepository.GetProfileWithDetailsAsync(userId);
-        if (freelancerProfile == null)
-        {
-            throw new BadRequestException("Freelancer profile not found.");
-        }
-
-        var applications = await _jobApplicationRepository.GetApplicationsByFreelancerIdAsync(freelancerProfile.Id);
+        var applications = await _jobApplicationRepository.GetByUserIdAsync(userId);
         return applications.Select(MapToResponse);
     }
 
@@ -167,7 +154,15 @@ public class JobApplicationService : IJobApplicationService
         return applications.Select(MapToResponse);
     }
 
-    public async Task<(byte[] FileBytes, string ContentType, string FileName)> DownloadCoverLetterAsync(int applicationId, string userId)
+    public async Task<IEnumerable<FreelancerProfileDto>> GetApplicantProfilesForJobAsync(int jobId, string userId)
+    {
+        var applications = await GetApplicationsForJobAsync(jobId, userId);
+        return applications
+            .Where(a => a.ApplicantProfile != null)
+            .Select(a => a.ApplicantProfile!);
+    }
+
+    public async Task<(Stream FileStream, string ContentType, string FileName)> DownloadCoverLetterAsync(int applicationId, string userId)
     {
         var application = await _jobApplicationRepository.GetByIdWithDetailsAsync(applicationId);
         if (application == null)
@@ -175,7 +170,6 @@ public class JobApplicationService : IJobApplicationService
             throw new NotFoundException($"Job application with ID {applicationId} not found.");
         }
 
-        // Authorize: Either the freelancer applicant or the job owner (client) can access the cover letter file
         var isApplicant = application.FreelancerProfile != null && application.FreelancerProfile.UserId == userId;
         var isJobOwner = application.Job != null && application.Job.ClientProfile != null && application.Job.ClientProfile.UserId == userId;
 
@@ -184,10 +178,32 @@ public class JobApplicationService : IJobApplicationService
             throw new ForbiddenException("You do not have permission to view or download this cover letter.");
         }
 
-        return (application.CoverLetterBytes, application.CoverLetterContentType, application.CoverLetterFileName);
+        if (string.IsNullOrEmpty(application.CoverLetterFileUrl))
+        {
+            throw new NotFoundException("No cover letter file was attached to this application.");
+        }
+
+        var stream = await _fileStorageService.GetFileStreamAsync(application.CoverLetterFileUrl);
+        var fileName = application.CoverLetterFileName ?? $"cover_letter_{applicationId}.pdf";
+        var contentType = GetContentType(fileName);
+
+        return (stream, contentType, fileName);
     }
 
-    private static JobApplicationResponse MapToResponse(JobApplication application)
+    private static string GetContentType(string fileName)
+    {
+        var ext = Path.GetExtension(fileName).ToLowerInvariant();
+        return ext switch
+        {
+            ".pdf" => "application/pdf",
+            ".doc" => "application/msword",
+            ".docx" => "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            ".txt" => "text/plain",
+            _ => "application/octet-stream"
+        };
+    }
+
+    private JobApplicationResponse MapToResponse(JobApplication application)
     {
         return new JobApplicationResponse
         {
@@ -198,8 +214,15 @@ public class JobApplicationService : IJobApplicationService
             FreelancerName = application.FreelancerProfile != null
                 ? $"{application.FreelancerProfile.FirstName} {application.FreelancerProfile.LastName}".Trim()
                 : string.Empty,
+            FreelancerTitle = application.FreelancerProfile?.ProfessionalTitle,
+            FreelancerPhotoUrl = application.FreelancerProfile?.ProfilePhotoUrl,
+            FreelancerEmail = application.FreelancerProfile?.Email,
+            ApplicantProfile = application.FreelancerProfile != null
+                ? _mapper.Map<FreelancerProfileDto>(application.FreelancerProfile)
+                : null,
+            CoverLetterText = application.CoverLetterText,
+            CoverLetterFileUrl = application.CoverLetterFileUrl,
             CoverLetterFileName = application.CoverLetterFileName,
-            CoverLetterContentType = application.CoverLetterContentType,
             ProposedRate = application.ProposedRate,
             EstimatedDays = application.EstimatedDays,
             Status = application.Status,

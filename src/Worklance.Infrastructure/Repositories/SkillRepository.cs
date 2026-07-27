@@ -20,7 +20,7 @@ public class SkillRepository : GenericRepository<Skill>, ISkillRepository
         return await _context.Skills
             .Include(s => s.CategorySkills)
                 .ThenInclude(cs => cs.Category)
-            .FirstOrDefaultAsync(s => s.Name.ToLower() == trimmedName.ToLower());
+            .FirstOrDefaultAsync(s => s.Name.ToLower() == trimmedName.ToLower() && !s.IsDeleted);
     }
 
     public async Task<Skill?> GetByIdWithCategoriesAsync(int id)
@@ -28,6 +28,6 @@ public class SkillRepository : GenericRepository<Skill>, ISkillRepository
         return await _context.Skills
             .Include(s => s.CategorySkills)
                 .ThenInclude(cs => cs.Category)
-            .FirstOrDefaultAsync(s => s.Id == id);
+            .FirstOrDefaultAsync(s => s.Id == id && !s.IsDeleted);
     }
 }

@@ -23,7 +23,7 @@ public static class DependencyInjection
 
         services.AddScoped<IJobService, JobService>();
         services.AddScoped<IJobApplicationService, JobApplicationService>();
-        services.AddScoped<IAdminService, AdminService>();
+        services.AddScoped<ICategoryService, CategoryService>();
 
         return services;
     }

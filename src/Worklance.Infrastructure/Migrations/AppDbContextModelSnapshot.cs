@@ -107,7 +107,6 @@ namespace Worklance.Infrastructure.Migrations
                         .HasColumnType("varbinary(max)");
 
                     b.Property<long>("AadhaarNumber")
-                        .HasMaxLength(12)
                         .HasColumnType("bigint");
 
                     b.Property<int>("AccountType")
@@ -140,7 +139,6 @@ namespace Worklance.Infrastructure.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<long>("PhoneNumber")
-                        .HasMaxLength(10)
                         .HasColumnType("bigint");
 
                     b.Property<string>("RejectionReason")
@@ -634,6 +632,65 @@ namespace Worklance.Infrastructure.Migrations
                     b.ToTable("Jobs", (string)null);
                 });
 
+            modelBuilder.Entity("Worklance.Domain.Entities.Job.JobApplication", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("CoverLetterFileName")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("CoverLetterFileUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("CoverLetterText")
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("EstimatedDays")
+                        .HasColumnType("int");
+
+                    b.Property<int>("FreelancerProfileId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("JobId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("LastModifiedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal>("ProposedRate")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FreelancerProfileId");
+
+                    b.HasIndex("JobId", "FreelancerProfileId")
+                        .IsUnique();
+
+                    b.ToTable("JobApplications", (string)null);
+                });
+
             modelBuilder.Entity("Worklance.Domain.Entities.Job.JobSkill", b =>
                 {
                     b.Property<int>("JobId")
@@ -656,6 +713,21 @@ namespace Worklance.Infrastructure.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime>("LastModifiedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -800,6 +872,25 @@ namespace Worklance.Infrastructure.Migrations
                     b.Navigation("ClientProfile");
                 });
 
+            modelBuilder.Entity("Worklance.Domain.Entities.Job.JobApplication", b =>
+                {
+                    b.HasOne("Worklance.Domain.Entities.FreelancerProfile", "FreelancerProfile")
+                        .WithMany("JobApplications")
+                        .HasForeignKey("FreelancerProfileId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Worklance.Domain.Entities.Job.Job", "Job")
+                        .WithMany("JobApplications")
+                        .HasForeignKey("JobId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("FreelancerProfile");
+
+                    b.Navigation("Job");
+                });
+
             modelBuilder.Entity("Worklance.Domain.Entities.Job.JobSkill", b =>
                 {
                     b.HasOne("Worklance.Domain.Entities.Job.Job", "Job")
@@ -832,6 +923,8 @@ namespace Worklance.Infrastructure.Migrations
 
                     b.Navigation("Educations");
 
+                    b.Navigation("JobApplications");
+
                     b.Navigation("Languages");
 
                     b.Navigation("Portfolios");
@@ -845,6 +938,8 @@ namespace Worklance.Infrastructure.Migrations
             modelBuilder.Entity("Worklance.Domain.Entities.Job.Job", b =>
                 {
                     b.Navigation("Bids");
+
+                    b.Navigation("JobApplications");
 
                     b.Navigation("JobSkills");
                 });

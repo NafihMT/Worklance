@@ -4,9 +4,10 @@ using Worklance.Domain.Entities.Job;
 
 namespace Worklance.Domain.Entities;
 
-public class Skill : BaseEntity
+public class Skill : BaseAuditableEntity
 {
     public string Name { get; set; } = string.Empty;
+    public bool IsDeleted { get; set; } = false;
 
     public ICollection<CategorySkill> CategorySkills { get; set; } = new List<CategorySkill>();
     public ICollection<JobSkill> JobSkills { get; set; } = new List<JobSkill>();

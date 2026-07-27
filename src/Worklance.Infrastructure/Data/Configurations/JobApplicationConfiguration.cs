@@ -12,16 +12,14 @@ public class JobApplicationConfiguration : IEntityTypeConfiguration<JobApplicati
 
         builder.HasKey(a => a.Id);
 
-        builder.Property(a => a.CoverLetterBytes)
-            .IsRequired();
+        builder.Property(a => a.CoverLetterText)
+            .HasMaxLength(4000);
+
+        builder.Property(a => a.CoverLetterFileUrl)
+            .HasMaxLength(500);
 
         builder.Property(a => a.CoverLetterFileName)
-            .HasMaxLength(255)
-            .IsRequired();
-
-        builder.Property(a => a.CoverLetterContentType)
-            .HasMaxLength(100)
-            .IsRequired();
+            .HasMaxLength(255);
 
         builder.Property(a => a.ProposedRate)
             .HasColumnType("decimal(18,2)")

@@ -26,16 +26,36 @@ public class JobApplicationRepository : GenericRepository<JobApplication>, IJobA
     public async Task<JobApplication?> GetByIdWithDetailsAsync(int id)
     {
         return await _context.JobApplications
+            .AsSplitQuery()
             .Include(a => a.Job)
             .Include(a => a.FreelancerProfile)
+                .ThenInclude(f => f.Skills)
+            .Include(a => a.FreelancerProfile)
+                .ThenInclude(f => f.Educations)
+            .Include(a => a.FreelancerProfile)
+                .ThenInclude(f => f.Certifications)
+            .Include(a => a.FreelancerProfile)
+                .ThenInclude(f => f.Portfolios)
+            .Include(a => a.FreelancerProfile)
+                .ThenInclude(f => f.Languages)
             .FirstOrDefaultAsync(a => a.Id == id);
     }
 
     public async Task<IReadOnlyList<JobApplication>> GetApplicationsByJobIdAsync(int jobId)
     {
         return await _context.JobApplications
+            .AsSplitQuery()
             .Include(a => a.Job)
             .Include(a => a.FreelancerProfile)
+                .ThenInclude(f => f.Skills)
+            .Include(a => a.FreelancerProfile)
+                .ThenInclude(f => f.Educations)
+            .Include(a => a.FreelancerProfile)
+                .ThenInclude(f => f.Certifications)
+            .Include(a => a.FreelancerProfile)
+                .ThenInclude(f => f.Portfolios)
+            .Include(a => a.FreelancerProfile)
+                .ThenInclude(f => f.Languages)
             .Where(a => a.JobId == jobId)
             .OrderByDescending(a => a.CreatedAt)
             .ToListAsync();
@@ -47,6 +67,16 @@ public class JobApplicationRepository : GenericRepository<JobApplication>, IJobA
             .Include(a => a.Job)
             .Include(a => a.FreelancerProfile)
             .Where(a => a.FreelancerProfileId == freelancerProfileId)
+            .OrderByDescending(a => a.CreatedAt)
+            .ToListAsync();
+    }
+
+    public async Task<IReadOnlyList<JobApplication>> GetByUserIdAsync(string userId)
+    {
+        return await _context.JobApplications
+            .Include(a => a.Job)
+            .Include(a => a.FreelancerProfile)
+            .Where(a => a.FreelancerProfile.UserId == userId)
             .OrderByDescending(a => a.CreatedAt)
             .ToListAsync();
     }

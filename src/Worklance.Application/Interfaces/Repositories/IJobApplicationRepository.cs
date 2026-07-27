@@ -10,4 +10,5 @@ public interface IJobApplicationRepository : IGenericRepository<JobApplication>
     Task<JobApplication?> GetByIdWithDetailsAsync(int id);
     Task<IReadOnlyList<JobApplication>> GetApplicationsByJobIdAsync(int jobId);
     Task<IReadOnlyList<JobApplication>> GetApplicationsByFreelancerIdAsync(int freelancerProfileId);
+    Task<IReadOnlyList<JobApplication>> GetByUserIdAsync(string userId);
 }

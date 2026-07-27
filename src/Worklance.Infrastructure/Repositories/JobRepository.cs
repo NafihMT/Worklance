@@ -66,7 +66,7 @@ public class JobRepository : GenericRepository<Job>, IJobRepository
     {
         return await _context.Skills
             .AsNoTracking()
-            .Where(s => s.CategorySkills.Any(c => c.CategoryId == categoryId))
+            .Where(s => !s.IsDeleted && s.CategorySkills.Any(c => c.CategoryId == categoryId && !c.Category.IsDeleted))
             .OrderBy(c => c.Name)
             .ToListAsync();
     }
@@ -75,7 +75,7 @@ public class JobRepository : GenericRepository<Job>, IJobRepository
     {
         return await _context.Skills
             .AsNoTracking()
-            .Where(s => skillIds.Contains(s.Id) && s.CategorySkills.Any(c => c.CategoryId == categoryId))
+            .Where(s => !s.IsDeleted && skillIds.Contains(s.Id) && s.CategorySkills.Any(c => c.CategoryId == categoryId && !c.Category.IsDeleted))
             .Select(s => s.Id)
             .ToListAsync();
     }

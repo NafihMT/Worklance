@@ -41,7 +41,6 @@ public class JobApplicationController : ControllerBase
             StatusCodes.Status200OK));
     }
 
-    
     [HttpGet("job-applications/my-applications")]
     [Authorize]
     public async Task<IActionResult> GetMyApplications()
@@ -82,6 +81,26 @@ public class JobApplicationController : ControllerBase
             StatusCodes.Status200OK));
     }
 
+    [HttpGet("jobs/{jobId}/applicant-profiles")]
+    [Authorize]
+    public async Task<IActionResult> GetApplicantProfilesForJob(int jobId)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            return Unauthorized(ApiResponse.Failure(
+                "Unauthorized access",
+                StatusCodes.Status401Unauthorized));
+        }
+
+        var result = await _jobApplicationService.GetApplicantProfilesForJobAsync(jobId, userId);
+
+        return Ok(ApiResponse.Success(
+            result,
+            "Applicant profiles retrieved successfully.",
+            StatusCodes.Status200OK));
+    }
+
     [HttpGet("job-applications/{applicationId}/download-cover-letter")]
     [Authorize]
     public async Task<IActionResult> DownloadCoverLetter(int applicationId)
@@ -94,8 +113,8 @@ public class JobApplicationController : ControllerBase
                 StatusCodes.Status401Unauthorized));
         }
 
-        var (fileBytes, contentType, fileName) = await _jobApplicationService.DownloadCoverLetterAsync(applicationId, userId);
+        var (fileStream, contentType, fileName) = await _jobApplicationService.DownloadCoverLetterAsync(applicationId, userId);
 
-        return File(fileBytes, contentType, fileName);
+        return File(fileStream, contentType, fileName);
     }
 }

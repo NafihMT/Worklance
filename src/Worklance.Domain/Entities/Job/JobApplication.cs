@@ -11,9 +11,10 @@ public class JobApplication : BaseAuditableEntity
     public int FreelancerProfileId { get; set; }
     public FreelancerProfile FreelancerProfile { get; set; } = null!;
 
-    public byte[] CoverLetterBytes { get; set; } = Array.Empty<byte>();
-    public string CoverLetterFileName { get; set; } = string.Empty;
-    public string CoverLetterContentType { get; set; } = string.Empty;
+    public string? CoverLetterText { get; set; }
+
+    public string? CoverLetterFileUrl { get; set; }
+    public string? CoverLetterFileName { get; set; }
 
     public decimal ProposedRate { get; set; }
     public int EstimatedDays { get; set; }
