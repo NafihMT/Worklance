@@ -63,7 +63,7 @@ namespace Worklance.Infrastructure.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("EmailOtps");
+                    b.ToTable("EmailOtps", (string)null);
                 });
 
             modelBuilder.Entity("Worklance.Domain.Entities.AuthEntities.RefreshToken", b =>
@@ -91,7 +91,7 @@ namespace Worklance.Infrastructure.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("RefreshTokens");
+                    b.ToTable("RefreshTokens", (string)null);
                 });
 
             modelBuilder.Entity("Worklance.Domain.Entities.AuthEntities.User", b =>
@@ -161,7 +161,7 @@ namespace Worklance.Infrastructure.Migrations
                     b.HasIndex("PhoneNumber")
                         .IsUnique();
 
-                    b.ToTable("Users");
+                    b.ToTable("Users", (string)null);
                 });
 
             modelBuilder.Entity("Worklance.Domain.Entities.FreelancerCertification", b =>
@@ -493,7 +493,7 @@ namespace Worklance.Infrastructure.Migrations
 
                     b.HasIndex("JobId");
 
-                    b.ToTable("Bid");
+                    b.ToTable("Bid", (string)null);
                 });
 
             modelBuilder.Entity("Worklance.Domain.Entities.Job.Category", b =>
@@ -528,7 +528,7 @@ namespace Worklance.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Categories");
+                    b.ToTable("Categories", (string)null);
                 });
 
             modelBuilder.Entity("Worklance.Domain.Entities.Job.CategorySkill", b =>
