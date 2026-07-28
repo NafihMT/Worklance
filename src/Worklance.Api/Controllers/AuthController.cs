@@ -16,10 +16,10 @@ namespace Worklance.Api.Controllers.AuthController
     {
         public string FullName { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
-        public string PhoneNumber { get; set; } = string.Empty;
+        public long PhoneNumber { get; set; }
         public string Password { get; set; } = string.Empty;
         public string ConfirmPassword { get; set; } = string.Empty;
-        public string AadhaarNumber { get; set; } = string.Empty;
+        public long AadhaarNumber { get; set; }
         public Worklance.Domain.Enums.AuthEnums.AccountType AccountType { get; set; }
         public IFormFile AadhaarProof { get; set; } = null!;
     }

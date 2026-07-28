@@ -121,10 +121,9 @@ namespace Worklance.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("varbinary(max)");
 
-                    b.Property<string>("AadhaarNumber")
-                        .IsRequired()
+                    b.Property<long>("AadhaarNumber")
                         .HasMaxLength(12)
-                        .HasColumnType("nvarchar(12)");
+                        .HasColumnType("bigint");
 
                     b.Property<int>("AccountType")
                         .HasColumnType("int");
@@ -155,10 +154,9 @@ namespace Worklance.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("PhoneNumber")
-                        .IsRequired()
+                    b.Property<long>("PhoneNumber")
                         .HasMaxLength(10)
-                        .HasColumnType("nvarchar(10)");
+                        .HasColumnType("bigint");
 
                     b.Property<string>("RejectionReason")
                         .HasColumnType("nvarchar(max)");

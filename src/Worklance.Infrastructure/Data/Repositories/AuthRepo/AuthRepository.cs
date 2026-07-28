@@ -25,12 +25,12 @@ namespace Worklance.Infrastructure.Data.Repositories.AuthRepo
             return await _context.Users.AnyAsync(x => x.Email == email);
         }
 
-        public async Task<bool> PhoneNumberExistsAsync(string phoneNumber)
+        public async Task<bool> PhoneNumberExistsAsync(long phoneNumber)
         {
             return await _context.Users.AnyAsync(x => x.PhoneNumber == phoneNumber);
         }
 
-        public async Task<bool> AadhaarNumberExistsAsync(string aadhaarNumber)
+        public async Task<bool> AadhaarNumberExistsAsync(long aadhaarNumber)
         {
             return await _context.Users.AnyAsync(x => x.AadhaarNumber == aadhaarNumber);
         }

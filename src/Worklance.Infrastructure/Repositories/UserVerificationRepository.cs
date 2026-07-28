@@ -46,7 +46,7 @@ namespace Worklance.Infrastructure.Repositories
             _context.Users.Update(user);
             await _context.SaveChangesAsync();
 
-            return (true, null);
+            return (true, null);    
         }
     }
 }

@@ -42,6 +42,7 @@ namespace Worklance.Infrastructure.Services.AuthServices
 
         public async Task<ApiResponse> RegisterAsync(RegisterRequestDto request)
         {
+            Console.WriteLine("[TRIPWIRE 1]: Starting Validation");
             var validationResult = await _registerValidator.ValidateAsync(request);
             if (!validationResult.IsValid)
             {
@@ -50,15 +51,30 @@ namespace Worklance.Infrastructure.Services.AuthServices
                 return ApiResponse.Failure("Registration failed due to multiple validation errors.", 400, errorMessages);
             }
 
-            await ValidateDuplicateAsync(request);
+            Console.WriteLine("[TRIPWIRE 2]: Starting Duplicate Check");
+            var duplicateErrors = await ValidateDuplicateAsync(request);
+            if (duplicateErrors.Any())
+            {
+                if (duplicateErrors.Count == 1) return ApiResponse.Failure(duplicateErrors.First(), 400);
+                return ApiResponse.Failure("Registration failed due to duplicate information.", 400, duplicateErrors);
+            }
 
-            bool ocrResult = await VerifyAadhaarAsync(Convert.ToBase64String(request.AadhaarImageBytes), request.AadhaarNumber);
+            Console.WriteLine("[TRIPWIRE 3]: Validating Aadhaar / Base64");
+            bool ocrResult = await VerifyAadhaarAsync(Convert.ToBase64String(request.AadhaarImageBytes), request.AadhaarNumber.ToString());
+
+            Console.WriteLine("[TRIPWIRE 4]: Hashing Password");
             var passwordHash = HashPassword(request.Password);
 
+            Console.WriteLine("[TRIPWIRE 5]: Creating User Object");
             var user = CreateUser(request, passwordHash, request.AadhaarImageBytes, ocrResult);
+
+            Console.WriteLine("[TRIPWIRE 6]: Adding User to DB Context");
             await _authRepository.AddUserAsync(user);
+
+            Console.WriteLine("[TRIPWIRE 7]: Saving Changes to DB (SQL Insert)");
             await _authRepository.SaveChangesAsync();
 
+            Console.WriteLine("[TRIPWIRE 8]: Generating OTP");
             var otp = OtpGenerator.GenerateOtp();
 
             var emailOtp = new EmailOtp
@@ -69,11 +85,14 @@ namespace Worklance.Infrastructure.Services.AuthServices
                 IsUsed = false
             };
 
+            Console.WriteLine("[TRIPWIRE 9]: Saving OTP to DB");
             await _authRepository.AddEmailOtpAsync(emailOtp);
             await _authRepository.SaveChangesAsync();
 
+            Console.WriteLine("[TRIPWIRE 10]: Sending Email");
             await _emailService.SendOtpAsync(request.Email, otp);
 
+            Console.WriteLine("[TRIPWIRE 11]: Registration Complete!");
             return ApiResponse.Success("Registration successful. OTP has been sent to your email.", 201);
         }
 
@@ -127,13 +146,21 @@ namespace Worklance.Infrastructure.Services.AuthServices
                 if (errorMessages.Count == 1) return ApiResponse.Failure(errorMessages.First(), 400);
                 return ApiResponse.Failure("Login failed due to multiple validation errors.", 400, errorMessages);
             }
-
             var user = await _authRepository.GetUserByEmailAsync(request.Email);
             if (user == null || !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
                 throw new BadRequestException("Invalid email or password.");
 
             if (!user.EmailVerified)
                 throw new BadRequestException("Please verify your email first.");
+
+            if (user.AdminVerificationStatus == AdminVerificationStatus.Rejected || user.Status == UserStatus.Rejected)
+            {
+                throw new BadRequestException("Your account has been rejected by the administrator.");
+            }
+            if (user.AdminVerificationStatus == AdminVerificationStatus.Pending)
+            {
+                throw new BadRequestException("Your account verification is pending approval from the administrator.");
+            }
 
             var accessToken = _jwtService.GenerateAccessToken(user);
             var refreshTokenEntity = _jwtService.GenerateRefreshToken();
@@ -243,14 +270,26 @@ namespace Worklance.Infrastructure.Services.AuthServices
         }
 
 
-        private async Task ValidateDuplicateAsync(RegisterRequestDto request)
+        private async Task<List<string>> ValidateDuplicateAsync(RegisterRequestDto request)
         {
-            if (await _authRepository.EmailExistsAsync(request.Email) ||
-                await _authRepository.PhoneNumberExistsAsync(request.PhoneNumber) ||
-                await _authRepository.AadhaarNumberExistsAsync(request.AadhaarNumber))
+            var errors = new List<string>();
+
+            if (await _authRepository.EmailExistsAsync(request.Email))
             {
-                throw new BadRequestException("User registered already.");
+                errors.Add("This email is already registered.");
             }
+
+            if (await _authRepository.PhoneNumberExistsAsync(request.PhoneNumber))
+            {
+                errors.Add("This phone number is already registered.");
+            }
+
+            if (await _authRepository.AadhaarNumberExistsAsync(request.AadhaarNumber))
+            {
+                errors.Add("This Aadhaar number is already registered.");
+            }
+
+            return errors;
         }
 
         private async Task<bool> VerifyAadhaarAsync(string imageUrl, string aadhaarNumber)

@@ -22,8 +22,7 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
             .IsUnique();
 
         builder.Property(x => x.PhoneNumber)
-            .IsRequired()
-            .HasMaxLength(10);
+            .IsRequired();
 
         builder.HasIndex(x => x.PhoneNumber)
             .IsUnique();
@@ -32,8 +31,7 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
             .IsRequired();
 
         builder.Property(x => x.AadhaarNumber)
-            .IsRequired()
-            .HasMaxLength(12);
+            .IsRequired();
 
         builder.HasIndex(x => x.AadhaarNumber)
             .IsUnique();
