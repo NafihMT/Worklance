@@ -1,14 +1,30 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Reflection;
+using AutoMapper;
+using FluentValidation;
+using Microsoft.Extensions.DependencyInjection;
+using Worklance.Application.Interfaces.Services;
+using Worklance.Application.Mapping.FreelancerProfileMapping;
+using Worklance.Application.Services;
+using Worklance.Application.Services.Jobs;
 
-namespace Worklance.Application
+namespace Worklance.Application;
+
+public static class DependencyInjection
 {
-    internal class DependencyInjection
+    public static IServiceCollection AddApplicationServices(this IServiceCollection services)
     {
-        // It is for register application services
+        services.AddAutoMapper(cfg =>
+        {
+            cfg.AddProfile<FreelancerProfileMappingProfile>();
+        });
+        services.AddScoped<IFreelancerProfileService, FreelancerProfileService>();
 
+        services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
+
+        services.AddScoped<IJobService, JobService>();
+        services.AddScoped<IJobApplicationService, JobApplicationService>();
+        services.AddScoped<ICategoryService, CategoryService>();
+
+        return services;
     }
 }

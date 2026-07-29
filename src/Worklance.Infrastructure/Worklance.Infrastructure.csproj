@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
@@ -8,12 +8,36 @@
 
   <ItemGroup>
     <PackageReference Include="AutoMapper" Version="16.1.1" />
+    <PackageReference Include="Dapper" Version="2.1.79" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.28" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.28" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.28">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
+    <PackageReference Include="CloudinaryDotNet" Version="1.24.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.10" />
+    <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="8.14.0" />
+    <PackageReference Include="StackExchange.Redis" Version="3.0.11" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.14.0" />
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Abstractions" Version="8.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Worklance.Domain\Worklance.Domain.csproj" />
+    <ProjectReference Include="..\Worklance.Application\Worklance.Application.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Worklance.Application\Worklance.Application.csproj" />
+    <ProjectReference Include="..\Worklance.Domain\Worklance.Domain.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Migrations\" />
+    <Folder Include="Persistence\" />
   </ItemGroup>
 
 </Project>

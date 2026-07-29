@@ -8,12 +8,23 @@
 
   <ItemGroup>
     <PackageReference Include="AutoMapper" Version="16.1.1" />
+    <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.2.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.28" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.28" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.28">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="FluentValidation" Version="11.9.0" />
+    <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="11.9.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Worklance.Domain\Worklance.Domain.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Worklance.Domain\Worklance.Domain.csproj" />
   </ItemGroup>
 
 </Project>
