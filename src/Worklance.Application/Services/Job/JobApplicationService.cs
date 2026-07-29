@@ -158,7 +158,7 @@ public class JobApplicationService : IJobApplicationService
             throw new ForbiddenException("You do not have permission to view this job application.");
         }
 
-        return MapToResponse(application);When 
+        return MapToResponse(application);
     }
 
     public async Task<IEnumerable<JobApplicationResponse>> GetApplicationsForJobAsync(int jobId, string userId)
