@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Worklance.Domain.Entities;
 using Worklance.Domain.Entities.Job;
@@ -52,8 +52,6 @@ public class JobConfiguration : IEntityTypeConfiguration<Job>
             .HasForeignKey(j => j.CategoryId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        // Soft delete query filter
-        builder.HasQueryFilter(j => !j.IsDeleted);  // No Soft delete in Global Filter 
 
         builder.HasIndex(j => j.Status);
         builder.HasIndex(j => j.ClientProfileId);

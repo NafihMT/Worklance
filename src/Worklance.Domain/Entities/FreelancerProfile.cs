@@ -48,4 +48,5 @@ public class FreelancerProfile : BaseAuditableEntity
     public ICollection<FreelancerCertification> Certifications { get; set; } = new List<FreelancerCertification>();
     public ICollection<FreelancerPortfolio> Portfolios { get; set; } = new List<FreelancerPortfolio>();
     public ICollection<FreelancerLanguage> Languages { get; set; } = new List<FreelancerLanguage>();
+    public ICollection<Job.JobApplication> JobApplications { get; set; } = new List<Job.JobApplication>();
 }

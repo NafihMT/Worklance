@@ -1,10 +1,8 @@
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using Worklance.Application.DTOs.Category;
 
 namespace Worklance.Application.Interfaces.Services;
 
-public interface IAdminService
+public interface ICategoryService
 {
     Task<CategoryResponse> CreateCategoryAsync(CreateCategoryRequest request);
     Task<CategoryResponse> UpdateCategoryAsync(int categoryId, UpdateCategoryRequest request);

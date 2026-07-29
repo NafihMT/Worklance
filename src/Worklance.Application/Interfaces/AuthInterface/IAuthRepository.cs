@@ -1,14 +1,10 @@
-using Microsoft.Identity.Client;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
+using Worklance.Application.Interfaces.Repositories;
 using Worklance.Domain.Entities.AuthEntities;
 
 namespace Worklance.Application.Interfaces.AuthInterface
 {
-    public interface IAuthRepository
+    public interface IAuthRepository : IGenericRepository<User>
     {
         // Duplicate Validation
         Task<bool> EmailExistsAsync(string email);

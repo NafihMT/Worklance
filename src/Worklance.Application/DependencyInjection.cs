@@ -1,13 +1,11 @@
+using System.Reflection;
 using AutoMapper;
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
-using System.Reflection;
 using Worklance.Application.Interfaces.Services;
 using Worklance.Application.Mapping.FreelancerProfileMapping;
 using Worklance.Application.Services;
-using Microsoft.Extensions.DependencyInjection;
-using FluentValidation;
-using System.Reflection;
+using Worklance.Application.Services.Jobs;
 
 namespace Worklance.Application;
 
@@ -23,9 +21,9 @@ public static class DependencyInjection
 
         services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
 
-
         services.AddScoped<IJobService, JobService>();
-        services.AddScoped<IAdminService, AdminService>();
+        services.AddScoped<IJobApplicationService, JobApplicationService>();
+        services.AddScoped<ICategoryService, CategoryService>();
 
         return services;
     }

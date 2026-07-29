@@ -15,7 +15,7 @@ namespace Worklance.Application.DTOs.Jobs
         public string CategoryName { get; set; } = string.Empty;
 
         public JobType JobType { get; set; }
-        public JobStatus Status { get; set; }
+        public bool IsOpen { get; set; }
 
         public decimal? FixedBudget { get; set; }
         public decimal? MinHourlyRate { get; set; }

@@ -17,7 +17,8 @@ public class CategoryRepository : GenericRepository<Category>, ICategoryReposito
     public async Task<Category?> GetByIdWithSkillsAsync(int id)
     {
         return await _context.Categories
-            .Include(c => c.Skills)
+            .Include(c => c.CategorySkills)
+                .ThenInclude(cs => cs.Skill)
             .FirstOrDefaultAsync(c => c.Id == id && !c.IsDeleted);
     }
 
@@ -42,7 +43,8 @@ public class CategoryRepository : GenericRepository<Category>, ICategoryReposito
     public async Task<IReadOnlyList<Category>> GetAllCategoriesWithSkillsAsync()
     {
         return await _context.Categories
-            .Include(c => c.Skills)
+            .Include(c => c.CategorySkills)
+                .ThenInclude(cs => cs.Skill)
             .Where(c => !c.IsDeleted)
             .OrderBy(c => c.Name)
             .ToListAsync();

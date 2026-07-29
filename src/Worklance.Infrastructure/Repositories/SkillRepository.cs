@@ -18,14 +18,16 @@ public class SkillRepository : GenericRepository<Skill>, ISkillRepository
         if (string.IsNullOrEmpty(trimmedName)) return null;
 
         return await _context.Skills
-            .Include(s => s.Categories)
-            .FirstOrDefaultAsync(s => s.Name.ToLower() == trimmedName.ToLower());
+            .Include(s => s.CategorySkills)
+                .ThenInclude(cs => cs.Category)
+            .FirstOrDefaultAsync(s => s.Name.ToLower() == trimmedName.ToLower() && !s.IsDeleted);
     }
 
     public async Task<Skill?> GetByIdWithCategoriesAsync(int id)
     {
         return await _context.Skills
-            .Include(s => s.Categories)
-            .FirstOrDefaultAsync(s => s.Id == id);
+            .Include(s => s.CategorySkills)
+                .ThenInclude(cs => cs.Category)
+            .FirstOrDefaultAsync(s => s.Id == id && !s.IsDeleted);
     }
 }
