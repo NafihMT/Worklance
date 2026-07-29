@@ -61,6 +61,26 @@ public class JobApplicationController : ControllerBase
             StatusCodes.Status200OK));
     }
 
+    [HttpGet("job-applications/{applicationId}")]
+    [Authorize]
+    public async Task<IActionResult> GetApplicationById(int applicationId)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            return Unauthorized(ApiResponse.Failure(
+                "Unauthorized access",
+                StatusCodes.Status401Unauthorized));
+        }
+
+        var result = await _jobApplicationService.GetApplicationByIdAsync(applicationId, userId);
+
+        return Ok(ApiResponse.Success(
+            result,
+            "Job application retrieved successfully.",
+            StatusCodes.Status200OK));
+    }
+
     [HttpGet("jobs/{jobId}/applications")]
     [Authorize]
     public async Task<IActionResult> GetApplicationsForJob(int jobId)
@@ -116,5 +136,65 @@ public class JobApplicationController : ControllerBase
         var (fileStream, contentType, fileName) = await _jobApplicationService.DownloadCoverLetterAsync(applicationId, userId);
 
         return File(fileStream, contentType, fileName);
+    }
+
+    [HttpPatch("job-applications/{applicationId}/accept")]
+    [Authorize]
+    public async Task<IActionResult> AcceptApplication(int applicationId)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            return Unauthorized(ApiResponse.Failure(
+                "Unauthorized access",
+                StatusCodes.Status401Unauthorized));
+        }
+
+        var result = await _jobApplicationService.AcceptApplicationAsync(applicationId, userId);
+
+        return Ok(ApiResponse.Success(
+            result,
+            "Job application accepted successfully.",
+            StatusCodes.Status200OK));
+    }
+
+    [HttpPatch("job-applications/{applicationId}/reject")]
+    [Authorize]
+    public async Task<IActionResult> RejectApplication(int applicationId)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            return Unauthorized(ApiResponse.Failure(
+                "Unauthorized access",
+                StatusCodes.Status401Unauthorized));
+        }
+
+        var result = await _jobApplicationService.RejectApplicationAsync(applicationId, userId);
+
+        return Ok(ApiResponse.Success(
+            result,
+            "Job application rejected successfully.",
+            StatusCodes.Status200OK));
+    }
+
+    [HttpPatch("job-applications/{applicationId}/status")]
+    [Authorize]
+    public async Task<IActionResult> UpdateApplicationStatus(int applicationId, [FromBody] UpdateJobApplicationStatusRequest request)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            return Unauthorized(ApiResponse.Failure(
+                "Unauthorized access",
+                StatusCodes.Status401Unauthorized));
+        }
+
+        var result = await _jobApplicationService.UpdateApplicationStatusAsync(applicationId, userId, request);
+
+        return Ok(ApiResponse.Success(
+            result,
+            $"Job application status updated to {request.Status} successfully.",
+            StatusCodes.Status200OK));
     }
 }

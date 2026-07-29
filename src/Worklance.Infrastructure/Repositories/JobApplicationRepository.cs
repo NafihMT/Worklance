@@ -28,6 +28,7 @@ public class JobApplicationRepository : GenericRepository<JobApplication>, IJobA
         return await _context.JobApplications
             .AsSplitQuery()
             .Include(a => a.Job)
+                .ThenInclude(j => j.ClientProfile)
             .Include(a => a.FreelancerProfile)
                 .ThenInclude(f => f.Skills)
             .Include(a => a.FreelancerProfile)
@@ -46,6 +47,7 @@ public class JobApplicationRepository : GenericRepository<JobApplication>, IJobA
         return await _context.JobApplications
             .AsSplitQuery()
             .Include(a => a.Job)
+                .ThenInclude(j => j.ClientProfile)
             .Include(a => a.FreelancerProfile)
                 .ThenInclude(f => f.Skills)
             .Include(a => a.FreelancerProfile)

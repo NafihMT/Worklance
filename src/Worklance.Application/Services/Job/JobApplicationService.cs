@@ -137,6 +137,30 @@ public class JobApplicationService : IJobApplicationService
         return applications.Select(MapToResponse);
     }
 
+    public async Task<JobApplicationResponse> GetApplicationByIdAsync(int applicationId, string userId)
+    {
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            throw new UnauthorizedException("User access token is missing or invalid.");
+        }
+
+        var application = await _jobApplicationRepository.GetByIdWithDetailsAsync(applicationId);
+        if (application == null)
+        {
+            throw new NotFoundException($"Job application with ID {applicationId} not found.");
+        }
+
+        var isApplicant = application.FreelancerProfile != null && application.FreelancerProfile.UserId == userId;
+        var isJobOwner = application.Job != null && application.Job.ClientProfile != null && application.Job.ClientProfile.UserId == userId;
+
+        if (!isApplicant && !isJobOwner)
+        {
+            throw new ForbiddenException("You do not have permission to view this job application.");
+        }
+
+        return MapToResponse(application);When 
+    }
+
     public async Task<IEnumerable<JobApplicationResponse>> GetApplicationsForJobAsync(int jobId, string userId)
     {
         var job = await _jobRepository.GetJobWithDetailsAsync(jobId);
@@ -188,6 +212,89 @@ public class JobApplicationService : IJobApplicationService
         var contentType = GetContentType(fileName);
 
         return (stream, contentType, fileName);
+    }
+
+    public async Task<JobApplicationResponse> AcceptApplicationAsync(int applicationId, string userId)
+    {
+        return await ChangeApplicationStatusInternalAsync(applicationId, userId, JobApplicationStatus.Accepted);
+    }
+
+    public async Task<JobApplicationResponse> RejectApplicationAsync(int applicationId, string userId)
+    {
+        return await ChangeApplicationStatusInternalAsync(applicationId, userId, JobApplicationStatus.Rejected);
+    }
+
+    public async Task<JobApplicationResponse> UpdateApplicationStatusAsync(int applicationId, string userId, UpdateJobApplicationStatusRequest request)
+    {
+        if (request == null)
+        {
+            throw new BadRequestException("Request payload cannot be null.");
+        }
+
+        return await ChangeApplicationStatusInternalAsync(applicationId, userId, request.Status);
+    }
+
+    private async Task<JobApplicationResponse> ChangeApplicationStatusInternalAsync(int applicationId, string userId, JobApplicationStatus targetStatus)
+    {
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            throw new UnauthorizedException("User access token is missing or invalid.");
+        }
+
+        var application = await _jobApplicationRepository.GetByIdWithDetailsAsync(applicationId);
+        if (application == null)
+        {
+            throw new NotFoundException($"Job application with ID {applicationId} not found.");
+        }
+
+        if (application.Job == null || application.Job.IsDeleted)
+        {
+            throw new NotFoundException("The job posting associated with this application does not exist or has been deleted.");
+        }
+
+      
+        if (application.Job.ClientProfile == null || application.Job.ClientProfile.UserId != userId)
+        {
+            throw new ForbiddenException("Only the client who posted this job is authorized to accept or reject its applications.");
+        }
+
+        
+        if (application.Job.Status == JobStatus.Cancelled)
+        {
+            throw new BadRequestException("Cannot update application status for a cancelled job.");
+        }
+
+      
+        if (application.Status == JobApplicationStatus.Withdrawn)
+        {
+            throw new BadRequestException("Cannot accept or reject a job application that has been withdrawn by the applicant.");
+        }
+       
+        if (application.Status == targetStatus)
+        {
+            throw new BadRequestException($"This job application is already marked as {targetStatus}.");
+        }
+
+        if (targetStatus == JobApplicationStatus.Accepted && application.Status == JobApplicationStatus.Rejected)
+        {
+            throw new BadRequestException("Cannot accept a job application that has already been rejected.");
+        }
+
+        if (targetStatus == JobApplicationStatus.Rejected && application.Status == JobApplicationStatus.Accepted)
+        {
+            throw new BadRequestException("Cannot reject a job application that has already been accepted.");
+        }
+
+
+        application.Status = targetStatus;
+        application.LastModifiedAt = DateTime.UtcNow;
+        application.LastModifiedBy = userId;
+
+        _jobApplicationRepository.Update(application);
+        await _unitOfWork.SaveChangesAsync();
+
+        var updatedApplication = await _jobApplicationRepository.GetByIdWithDetailsAsync(application.Id);
+        return MapToResponse(updatedApplication ?? application);
     }
 
     private static string GetContentType(string fileName)
