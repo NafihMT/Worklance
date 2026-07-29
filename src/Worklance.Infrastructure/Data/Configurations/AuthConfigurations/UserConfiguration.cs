@@ -22,6 +22,9 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
             .IsUnique();
 
         builder.Property(x => x.PhoneNumber)
+            .HasConversion(
+                v => v.ToString(),
+                v => string.IsNullOrEmpty(v) ? 0L : Convert.ToInt64(v))
             .IsRequired();
 
         builder.HasIndex(x => x.PhoneNumber)
@@ -31,6 +34,9 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
             .IsRequired();
 
         builder.Property(x => x.AadhaarNumber)
+            .HasConversion(
+                v => v.ToString(),
+                v => string.IsNullOrEmpty(v) ? 0L : Convert.ToInt64(v))
             .IsRequired();
 
         builder.HasIndex(x => x.AadhaarNumber)
@@ -42,7 +48,13 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(x => x.AccountType)
             .HasConversion<int>();
 
+        builder.Property(x => x.Role)
+            .HasConversion<int>();
+
         builder.Property(x => x.Status)
+            .HasConversion<int>();
+
+        builder.Property(x => x.AdminVerificationStatus)
             .HasConversion<int>();
     }
 }
